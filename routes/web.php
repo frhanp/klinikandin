@@ -7,7 +7,7 @@ use App\Http\Controllers\Admin\RuleController;
 use App\Http\Controllers\DiagnosaController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\HomeController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/kontak', [HomeController::class, 'kontak'])->name('kontak');
 
 // Grup untuk semua pengguna yang sudah otentikasi
 Route::middleware(['auth', 'verified'])->group(function () {
