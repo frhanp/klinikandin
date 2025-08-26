@@ -15,7 +15,7 @@
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hasil Penyakit</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kecocokan</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
@@ -23,7 +23,11 @@
                                     <tr>
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $item->created_at->format('d M Y, H:i') }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap font-medium">{{ $item->penyakit->nama_penyakit }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap">{{ number_format($item->hasil_skor * 100, 2) }}%</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <a href="{{ route('diagnosa.hasil', $item->id) }}" class="text-indigo-600 hover:text-indigo-900 font-medium">
+                                                Lihat Detail
+                                            </a>
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr>

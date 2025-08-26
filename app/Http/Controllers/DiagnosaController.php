@@ -10,95 +10,80 @@ use Illuminate\Support\Facades\Auth;
 
 class DiagnosaController extends Controller
 {
-    // Menampilkan halaman form diagnosa
     public function index()
     {
-        $gejalas = Gejala::orderBy('kode_gejala')->get();
+        $gejalas = Gejala::all();
         return view('diagnosa.index', compact('gejalas'));
     }
 
-    // Memproses data gejala yang dipilih user
     public function process(Request $request)
     {
         $request->validate([
             'gejala_ids' => 'required|array|min:1',
-            'gejala_ids.*' => 'exists:gejalas,id',
+        ], [
+            'gejala_ids.required' => 'Silakan pilih minimal satu gejala untuk memulai diagnosa.',
         ]);
 
-        $gejalaTerpilihIds = $request->input('gejala_ids');
-        $gejalaTerpilihCount = count($gejalaTerpilihIds);
+        $gejala_ids = $request->input('gejala_ids', []);
 
-        // Mengambil semua penyakit beserta relasi gejalanya
+        if (count($gejala_ids) > 10) {
+            return redirect()->back()->with('error', 'Anda memilih terlalu banyak gejala. Mohon pilih hanya gejala yang paling relevan (maksimal 10).');
+        }
         $penyakits = Penyakit::with('gejalas')->get();
-
-        $hasilDiagnosa = [];
+        $matches = [];
 
         foreach ($penyakits as $penyakit) {
-            $gejalaPenyakitIds = $penyakit->gejalas->pluck('id')->toArray();
-            $gejalaCocok = array_intersect($gejalaTerpilihIds, $gejalaPenyakitIds);
-            $jumlahGejalaCocok = count($gejalaCocok);
-            $jumlahGejalaPenyakit = count($gejalaPenyakitIds);
+            $gejalaCocokCount = $penyakit->gejalas->whereIn('id', $gejala_ids)->count();
+            $totalGejala = $penyakit->gejalas->count();
 
-            if ($jumlahGejalaPenyakit > 0) {
-                // Formula sederhana: (jumlah cocok / jumlah gejala penyakit)
-                $skor = $jumlahGejalaCocok / $jumlahGejalaPenyakit;
-            } else {
-                $skor = 0;
-            }
-
-            if ($skor > 0) {
-                 $hasilDiagnosa[] = [
-                    'penyakit' => $penyakit,
-                    'skor' => $skor,
-                ];
+            if ($totalGejala > 0) {
+                $skor = $gejalaCocokCount / ($totalGejala + count($gejala_ids) - $gejalaCocokCount);
+                if ($skor > 0) {
+                    $matches[] = [
+                        'penyakit' => $penyakit,
+                        'skor' => $skor,
+                    ];
+                }
             }
         }
-        
-        // Urutkan hasil dari skor tertinggi
-        if(!empty($hasilDiagnosa)) {
-            usort($hasilDiagnosa, function ($a, $b) {
-                return $b['skor'] <=> $a['skor'];
-            });
-    
-            $penyakitTeratas = $hasilDiagnosa[0]['penyakit'];
-            $skorTertinggi = $hasilDiagnosa[0]['skor'];
-    
-            // Simpan riwayat diagnosa
-            $history = DiagnosaHistory::create([
-                'user_id' => Auth::id(),
-                'penyakit_id' => $penyakitTeratas->id,
-                'gejala_terpilih' => json_encode($gejalaTerpilihIds),
-                'hasil_skor' => $skorTertinggi,
-            ]);
-    
-            return redirect()->route('diagnosa.hasil', $history->id);
 
+        if (!empty($matches)) {
+            usort($matches, fn($a, $b) => $b['skor'] <=> $a['skor']);
+            $bestMatch = $matches[0];
+
+            $diagnosaHistory = DiagnosaHistory::create([
+                'user_id' => Auth::id(),
+                'penyakit_id' => $bestMatch['penyakit']->id,
+                'gejala_terpilih' => json_encode($gejala_ids),
+                'hasil_skor' => $bestMatch['skor'] * 100, // <--- KODE SUDAH DIPERBAIKI
+            ]);
+
+            return redirect()->route('diagnosa.hasil', $diagnosaHistory->id);
         } else {
-            // Jika tidak ada penyakit yang cocok sama sekali
             return redirect()->route('diagnosa.index')->with('error', 'Tidak ditemukan penyakit yang sesuai dengan gejala yang Anda pilih.');
         }
     }
 
-    // Menampilkan halaman hasil diagnosa
     public function hasil(DiagnosaHistory $diagnosaHistory)
     {
-        // Pastikan user hanya bisa melihat riwayatnya sendiri
         if ($diagnosaHistory->user_id !== Auth::id()) {
             abort(403);
         }
-        
-        $diagnosaHistory->load('penyakit'); // Eager load relasi penyakit
-        return view('diagnosa.hasil', compact('diagnosaHistory'));
+
+        $diagnosaHistory->load('penyakit');
+
+        $gejalaTerpilihIds = json_decode($diagnosaHistory->gejala_terpilih, true);
+        $gejalaTerpilih = Gejala::whereIn('id', $gejalaTerpilihIds)->get();
+
+        return view('diagnosa.hasil', compact('diagnosaHistory', 'gejalaTerpilih'));
     }
 
-    // Menampilkan halaman riwayat diagnosa
     public function riwayat()
     {
         $riwayat = DiagnosaHistory::where('user_id', Auth::id())
             ->with('penyakit')
             ->latest()
             ->paginate(10);
-            
         return view('diagnosa.riwayat', compact('riwayat'));
     }
 }
