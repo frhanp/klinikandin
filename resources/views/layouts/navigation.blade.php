@@ -1,13 +1,19 @@
 <aside class="h-full flex flex-col md:h-screen md:sticky md:top-0">
-    <!-- Logo -->
     <div class="p-6 border-b border-gray-200">
-        <a href="{{ route('dashboard') }}" class="text-2xl font-bold text-gray-800">
-            {{ config('app.name', 'MY APP') }}
+        <a href="{{ route('dashboard') }}" class="block transition-transform duration-200 hover:scale-105">
+            <div>
+                <p class="text-base font-bold text-gray-800 leading-tight">
+                    Sistem Pakar Penyakit Tulang
+                </p>
+                <p class="text-xs font-semibold text-indigo-600 uppercase tracking-wider">
+                    SPPT
+                </p>
+            </div>
         </a>
     </div>
     <!-- Nav Links -->
     <nav class="flex-1 px-4 py-6 space-y-2">
-        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard', 'admin.dashboard', 'dokter.dashboard')">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                 stroke="currentColor" class="size-4">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -16,54 +22,42 @@
 
             {{ __('Dashboard') }}
         </x-nav-link>
+
+        {{-- Tampilkan menu ini jika rolenya 'admin' ATAU 'dokter' --}}
+        @if (in_array(Auth::user()->role, ['admin', 'dokter']))
+
+            {{-- HANYA ADMIN YANG BISA MELIHAT INI --}}
+            @if (Auth::user()->role == 'admin')
+                <x-nav-link :href="route('admin.gejala.index')" :active="request()->routeIs('admin.gejala.*')">
+                    {{ __('Gejala') }}
+                </x-nav-link>
+                <x-nav-link :href="route('admin.penyakit.index')" :active="request()->routeIs('admin.penyakit.*')">
+                    {{ __('Penyakit') }}
+                </x-nav-link>
+            @endif
+
+            {{-- ADMIN DAN DOKTER BISA MELIHAT INI --}}
+            {{-- Kita sesuaikan route-nya agar dinamis berdasarkan role --}}
+            @php
+                $ruleRoute = Auth::user()->role == 'admin' ? route('admin.rule.index') : route('dokter.rule.index');
+                $isRuleActive = request()->routeIs('admin.rule.*') || request()->routeIs('dokter.rule.*');
+            @endphp
+            <x-nav-link :href="$ruleRoute" :active="$isRuleActive">
+                {{ __('Rule Base') }}
+            </x-nav-link>
+
+        @endif
         {{-- Navigasi Khusus Pengguna Biasa --}}
-        @if(Auth::user()->role == 'pengguna')
+
+        @if (Auth::user()->role == 'pengguna')
+            <x-nav-link :href="route('diagnosa.index')" :active="request()->routeIs('diagnosa.index')">
+                {{ __('Mulai Diagnosa') }}
+            </x-nav-link>
             <x-nav-link :href="route('diagnosa.riwayat')" :active="request()->routeIs('diagnosa.riwayat')">
-                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
                 {{ __('Riwayat Diagnosa') }}
             </x-nav-link>
         @endif
-        {{-- Tambahkan Navigasi Khusus Admin di sini --}}
-        @if(in_array(Auth::user()->role, ['admin', 'dokter']))
-            <div class="mt-4 pt-4 border-t border-gray-200">
-                <p class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Master Data</p>
-                <div class="mt-2 space-y-2">
-                    <x-nav-link :href="route('admin.gejala.index')" :active="request()->routeIs('admin.gejala.*')">
-                        {{-- Icon bisa diganti dengan SVG lain jika mau --}}
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                        </svg>
-                        {{ __('Gejala') }}
-                    </x-nav-link>
-                    {{-- Link Penyakit --}}
-                    <x-nav-link :href="route('admin.penyakit.index')" :active="request()->routeIs('admin.penyakit.*')">
-                        {{-- Icon Penyakit --}}
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v4.512a2 2 0 01-1 1.732l-2 1.155a2 2 0 01-2 0l-2-1.155A2 2 0 015 9.512V5L4 4" />
-                        </svg>
-                        {{ __('Penyakit') }}
-                    </x-nav-link>
 
-                    {{-- Link Rule Base --}}
-                    <x-nav-link :href="route('admin.rule.index')" :active="request()->routeIs('admin.rule.*')">
-                        {{-- Icon Rule Base --}}
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                        </svg>
-                        {{ __('Rule Base') }}
-                    </x-nav-link>
-                    {{-- Nanti link untuk Penyakit dan Rule bisa ditambahkan di sini --}}
-                </div>
-            </div>
-        @endif
     </nav>
     <!-- User Dropdown -->
     <div x-data="{ open: false }" class="px-4 py-4 border-t border-gray-200">

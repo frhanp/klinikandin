@@ -23,9 +23,15 @@
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Penyakit</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Kode</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Nama Penyakit</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
@@ -34,7 +40,17 @@
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $penyakit->kode_penyakit }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $penyakit->nama_penyakit }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <a href="{{ route('admin.rule.edit', $penyakit) }}" class="text-indigo-600 hover:text-indigo-900">Kelola Aturan</a>
+                                            {{-- Kode yang sudah diperbaiki --}}
+                                            @php
+                                                // Cek role user, lalu tentukan nama rute yang benar
+                                                $editRoute =
+                                                    Auth::user()->role == 'admin'
+                                                        ? route('admin.rule.edit', $penyakit->id)
+                                                        : route('dokter.rule.edit', $penyakit->id);
+                                            @endphp
+                                            <a href="{{ $editRoute }}" class="text-indigo-600 hover:text-indigo-900">
+                                                Kelola Aturan
+                                            </a>
                                         </td>
                                     </tr>
                                 @empty

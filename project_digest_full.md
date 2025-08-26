@@ -1,5 +1,5 @@
 ﻿# Project Digest (Full Content)
-_Generated: 2025-08-25 23:55:24_
+_Generated: 2025-08-26 12:28:33_
 **Root:** D:\Laragon\www\klinikandin
 
 
@@ -176,6 +176,7 @@ routes\auth.php
 routes\console.php
 routes\web.php
 storage\app
+storage\debugbar
 storage\framework
 storage\logs
 storage\app\private
@@ -266,6 +267,8 @@ Branch:
 main
 
 Last 5 commits:
+9690027 perbaiki tampilan diagnosa
+65ed27c tambah kontak pada landing
 e500c46 fix landing
 f9a420c feat: Implement main application features
 82f810a first commit
@@ -441,6 +444,12 @@ require __DIR__ . '/auth.php';
 ```
 
   GET|HEAD        / ............................................................................................... 
+  GET|HEAD        _debugbar/assets/javascript ......... debugbar.assets.js ΓÇ║ Barryvdh\Debugbar ΓÇ║ AssetController@js
+  GET|HEAD        _debugbar/assets/stylesheets ...... debugbar.assets.css ΓÇ║ Barryvdh\Debugbar ΓÇ║ AssetController@css
+  DELETE          _debugbar/cache/{key}/{tags?} debugbar.cache.delete ΓÇ║ Barryvdh\Debugbar ΓÇ║ CacheController@delete
+  GET|HEAD        _debugbar/clockwork/{id} debugbar.clockwork ΓÇ║ Barryvdh\Debugbar ΓÇ║ OpenHandlerController@clockwork
+  GET|HEAD        _debugbar/open .......... debugbar.openhandler ΓÇ║ Barryvdh\Debugbar ΓÇ║ OpenHandlerController@handle
+  POST            _debugbar/queries/explain debugbar.queries.explain ΓÇ║ Barryvdh\Debugbar ΓÇ║ QueriesController@explaΓÇª
   GET|HEAD        admin/dashboard ................................................................. admin.dashboard
   GET|HEAD        admin/gejala .................................. admin.gejala.index ΓÇ║ Admin\GejalaController@index
   POST            admin/gejala .................................. admin.gejala.store ΓÇ║ Admin\GejalaController@store
@@ -486,7 +495,7 @@ require __DIR__ . '/auth.php';
   GET|HEAD        verify-email ....................... verification.notice ΓÇ║ Auth\EmailVerificationPromptController
   GET|HEAD        verify-email/{id}/{hash} ....................... verification.verify ΓÇ║ Auth\VerifyEmailController
 
-                                                                                                Showing [45] routes
+                                                                                                Showing [51] routes
 
 ```
 
@@ -1094,95 +1103,80 @@ use Illuminate\Support\Facades\Auth;
 
 class DiagnosaController extends Controller
 {
-    // Menampilkan halaman form diagnosa
     public function index()
     {
-        $gejalas = Gejala::orderBy('kode_gejala')->get();
+        $gejalas = Gejala::all();
         return view('diagnosa.index', compact('gejalas'));
     }
 
-    // Memproses data gejala yang dipilih user
     public function process(Request $request)
     {
         $request->validate([
             'gejala_ids' => 'required|array|min:1',
-            'gejala_ids.*' => 'exists:gejalas,id',
+        ], [
+            'gejala_ids.required' => 'Silakan pilih minimal satu gejala untuk memulai diagnosa.',
         ]);
 
-        $gejalaTerpilihIds = $request->input('gejala_ids');
-        $gejalaTerpilihCount = count($gejalaTerpilihIds);
+        $gejala_ids = $request->input('gejala_ids', []);
 
-        // Mengambil semua penyakit beserta relasi gejalanya
+        if (count($gejala_ids) > 10) {
+            return redirect()->back()->with('error', 'Anda memilih terlalu banyak gejala. Mohon pilih hanya gejala yang paling relevan (maksimal 10).');
+        }
         $penyakits = Penyakit::with('gejalas')->get();
-
-        $hasilDiagnosa = [];
+        $matches = [];
 
         foreach ($penyakits as $penyakit) {
-            $gejalaPenyakitIds = $penyakit->gejalas->pluck('id')->toArray();
-            $gejalaCocok = array_intersect($gejalaTerpilihIds, $gejalaPenyakitIds);
-            $jumlahGejalaCocok = count($gejalaCocok);
-            $jumlahGejalaPenyakit = count($gejalaPenyakitIds);
+            $gejalaCocokCount = $penyakit->gejalas->whereIn('id', $gejala_ids)->count();
+            $totalGejala = $penyakit->gejalas->count();
 
-            if ($jumlahGejalaPenyakit > 0) {
-                // Formula sederhana: (jumlah cocok / jumlah gejala penyakit)
-                $skor = $jumlahGejalaCocok / $jumlahGejalaPenyakit;
-            } else {
-                $skor = 0;
-            }
-
-            if ($skor > 0) {
-                 $hasilDiagnosa[] = [
-                    'penyakit' => $penyakit,
-                    'skor' => $skor,
-                ];
+            if ($totalGejala > 0) {
+                $skor = $gejalaCocokCount / ($totalGejala + count($gejala_ids) - $gejalaCocokCount);
+                if ($skor > 0) {
+                    $matches[] = [
+                        'penyakit' => $penyakit,
+                        'skor' => $skor,
+                    ];
+                }
             }
         }
-        
-        // Urutkan hasil dari skor tertinggi
-        if(!empty($hasilDiagnosa)) {
-            usort($hasilDiagnosa, function ($a, $b) {
-                return $b['skor'] <=> $a['skor'];
-            });
-    
-            $penyakitTeratas = $hasilDiagnosa[0]['penyakit'];
-            $skorTertinggi = $hasilDiagnosa[0]['skor'];
-    
-            // Simpan riwayat diagnosa
-            $history = DiagnosaHistory::create([
-                'user_id' => Auth::id(),
-                'penyakit_id' => $penyakitTeratas->id,
-                'gejala_terpilih' => json_encode($gejalaTerpilihIds),
-                'hasil_skor' => $skorTertinggi,
-            ]);
-    
-            return redirect()->route('diagnosa.hasil', $history->id);
 
+        if (!empty($matches)) {
+            usort($matches, fn($a, $b) => $b['skor'] <=> $a['skor']);
+            $bestMatch = $matches[0];
+
+            $diagnosaHistory = DiagnosaHistory::create([
+                'user_id' => Auth::id(),
+                'penyakit_id' => $bestMatch['penyakit']->id,
+                'gejala_terpilih' => json_encode($gejala_ids),
+                'hasil_skor' => $bestMatch['skor'] * 100, // <--- KODE SUDAH DIPERBAIKI
+            ]);
+
+            return redirect()->route('diagnosa.hasil', $diagnosaHistory->id);
         } else {
-            // Jika tidak ada penyakit yang cocok sama sekali
             return redirect()->route('diagnosa.index')->with('error', 'Tidak ditemukan penyakit yang sesuai dengan gejala yang Anda pilih.');
         }
     }
 
-    // Menampilkan halaman hasil diagnosa
     public function hasil(DiagnosaHistory $diagnosaHistory)
     {
-        // Pastikan user hanya bisa melihat riwayatnya sendiri
         if ($diagnosaHistory->user_id !== Auth::id()) {
             abort(403);
         }
-        
-        $diagnosaHistory->load('penyakit'); // Eager load relasi penyakit
-        return view('diagnosa.hasil', compact('diagnosaHistory'));
+
+        $diagnosaHistory->load('penyakit');
+
+        $gejalaTerpilihIds = json_decode($diagnosaHistory->gejala_terpilih, true);
+        $gejalaTerpilih = Gejala::whereIn('id', $gejalaTerpilihIds)->get();
+
+        return view('diagnosa.hasil', compact('diagnosaHistory', 'gejalaTerpilih'));
     }
 
-    // Menampilkan halaman riwayat diagnosa
     public function riwayat()
     {
         $riwayat = DiagnosaHistory::where('user_id', Auth::id())
             ->with('penyakit')
             ->latest()
             ->paginate(10);
-            
         return view('diagnosa.riwayat', compact('riwayat'));
     }
 }
@@ -2326,40 +2320,53 @@ $classes = ($active ?? false)
     <div class="py-12">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-8 space-y-6">
-                    <div class="text-center">
-                        <h3 class="text-2xl font-bold text-gray-800">
+                <div class="p-6 md:p-8 text-gray-900 space-y-6">
+
+                    {{-- Gejala yang Dipilih Pengguna --}}
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-700">Berdasarkan gejala yang Anda pilih:</h3>
+                        <ul class="mt-2 list-disc list-inside space-y-1 text-gray-600">
+                            @foreach($gejalaTerpilih as $gejala)
+                                <li>{{ $gejala->nama_gejala }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+
+                    {{-- Hasil Diagnosa --}}
+                    <div class="border-t pt-6">
+                        <p class="text-lg font-medium text-gray-700">Diagnosa awal yang paling sesuai adalah:</p>
+                        <h1 class="text-4xl font-bold text-indigo-600 mt-1">
                             {{ $diagnosaHistory->penyakit->nama_penyakit }}
-                        </h3>
-                        <p class="text-lg font-medium text-indigo-600 mt-1">
-                            Tingkat Kecocokan: {{ number_format($diagnosaHistory->hasil_skor * 100, 2) }}%
-                        </p>
+                        </h1>
+                    </div>
+
+                    {{-- Deskripsi & Solusi --}}
+                    <div>
+                        <h4 class="text-xl font-semibold text-gray-800">Deskripsi Penyakit</h4>
+                        <div class="mt-2 prose max-w-none prose-p:text-gray-600">
+                            <p>{{ $diagnosaHistory->penyakit->deskripsi }}</p>
+                        </div>
                     </div>
 
                     <div class="border-t pt-6">
-                        <h4 class="text-lg font-semibold text-gray-700 mb-2">Deskripsi Penyakit</h4>
-                        <p class="text-gray-600 text-justify">
-                            {{ $diagnosaHistory->penyakit->deskripsi }}
-                        </p>
+                        <h4 class="text-xl font-semibold text-gray-800">Saran Penanganan</h4>
+                        <div class="mt-2 prose max-w-none prose-p:text-gray-600">
+                            <p>{{ $diagnosaHistory->penyakit->solusi }}</p>
+                        </div>
                     </div>
 
-                    <div class="border-t pt-6">
-                        <h4 class="text-lg font-semibold text-gray-700 mb-2">Solusi dan Penanganan</h4>
-                        <p class="text-gray-600 text-justify">
-                           {{ $diagnosaHistory->penyakit->solusi }}
-                        </p>
-                    </div>
-                    
+                    {{-- Disclaimer --}}
                     <div class="border-t pt-6 text-sm text-gray-500">
-                        <p><strong>Disclaimer:</strong> Hasil diagnosa ini adalah berdasarkan sistem pakar dan tidak menggantikan konsultasi medis profesional. Segera hubungi dokter untuk penanganan lebih lanjut.</p>
+                        <p><strong>Penting:</strong> Hasil ini adalah diagnosa awal berdasarkan sistem pakar dan tidak menggantikan konsultasi medis profesional. Segera hubungi dokter untuk pemeriksaan lebih lanjut.</p>
                     </div>
 
-                    <div class="flex justify-center gap-4 mt-8">
-                        <a href="{{ route('diagnosa.index') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700">
-                            Diagnosa Ulang
+                    {{-- Tombol Aksi --}}
+                    <div class="flex justify-end gap-4">
+                        <a href="{{ route('diagnosa.riwayat') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50">
+                            Lihat Semua Riwayat
                         </a>
-                         <a href="{{ route('diagnosa.riwayat') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50">
-                            Lihat Riwayat
+                        <a href="{{ route('diagnosa.index') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900">
+                            Ulangi Diagnosa
                         </a>
                     </div>
                 </div>
@@ -2438,7 +2445,7 @@ $classes = ($active ?? false)
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hasil Penyakit</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kecocokan</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
@@ -2446,7 +2453,11 @@ $classes = ($active ?? false)
                                     <tr>
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $item->created_at->format('d M Y, H:i') }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap font-medium">{{ $item->penyakit->nama_penyakit }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap">{{ number_format($item->hasil_skor * 100, 2) }}%</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <a href="{{ route('diagnosa.hasil', $item->id) }}" class="text-indigo-600 hover:text-indigo-900 font-medium">
+                                                Lihat Detail
+                                            </a>
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr>
@@ -2712,23 +2723,38 @@ $classes = ($active ?? false)
 
 <body class="antialiased bg-gray-50 text-gray-800">
     <div class="min-h-screen flex flex-col">
-        
-        <header class="bg-white shadow-sm">
+
+        {{-- resources/views/pages/kontak.blade.php --}}
+
+        {{-- resources/views/pages/kontak.blade.php --}}
+
+        {{-- Ganti tag <header> yang lama dengan yang ini --}}
+        <header class="bg-white/95 backdrop-blur-sm shadow-sm ring-1 ring-gray-900/5">
             <nav class="flex items-center justify-between p-6 lg:px-8 max-w-7xl mx-auto" aria-label="Global">
+                {{-- LOGO DI KIRI --}}
                 <div class="flex lg:flex-1">
                     <a href="/" class="-m-1.5 p-1.5">
                         <span class="text-xl font-bold text-indigo-600">Klinik Andin</span>
                     </a>
                 </div>
-                <div class="hidden lg:flex lg:gap-x-12">
+
+                {{-- SEMUA LINK NAVIGASI DI KANAN --}}
+                <div class="hidden lg:flex lg:items-center lg:gap-x-6">
+                    {{-- Link Kontak ditandai aktif dengan warna indigo --}}
                     <a href="{{ route('kontak') }}" class="text-sm font-semibold leading-6 text-indigo-600">Kontak</a>
-                </div>
-                <div class="hidden lg:flex lg:flex-1 lg:justify-end">
+
                     @if (Route::has('login'))
+                        {{-- Garis Pemisah Vertikal --}}
+                        <span class="h-6 w-px bg-gray-200" aria-hidden="true"></span>
+
                         @auth
-                            <a href="{{ url('/dashboard') }}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-indigo-600">Dashboard <span aria-hidden="true">â†’</span></a>
+                            <a href="{{ url('/dashboard') }}"
+                                class="text-sm font-semibold leading-6 text-gray-900 hover:text-indigo-600">Dashboard <span
+                                    aria-hidden="true">&rarr;</span></a>
                         @else
-                            <a href="{{ route('login') }}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-indigo-600">Log in <span aria-hidden="true">â†’</span></a>
+                            <a href="{{ route('login') }}"
+                                class="text-sm font-semibold leading-6 text-gray-900 hover:text-indigo-600">Log in <span
+                                    aria-hidden="true">&rarr;</span></a>
                         @endauth
                     @endif
                 </div>
@@ -2740,7 +2766,7 @@ $classes = ($active ?? false)
             <div class="bg-white">
                 <section class="py-20 md:py-28 px-4">
                     <div class="max-w-5xl mx-auto">
-                        
+
                         {{-- Judul Halaman --}}
                         <div class="text-center mb-16">
                             <h2 class="text-4xl md:text-5xl font-bold tracking-tight text-gray-900">
@@ -2753,16 +2779,20 @@ $classes = ($active ?? false)
 
                         {{-- Grid untuk menampilkan alamat --}}
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            
+
                             @foreach ($kontakDokter as $kontak)
-                                <div class="bg-gray-50 rounded-xl shadow-lg p-6 flex space-x-6 transition-all duration-300 ease-in-out hover:shadow-xl hover:-translate-y-1 ring-1 ring-gray-200">
+                                <div
+                                    class="bg-gray-50 rounded-xl shadow-lg p-6 flex space-x-6 transition-all duration-300 ease-in-out hover:shadow-xl hover:-translate-y-1 ring-1 ring-gray-200">
                                     {{-- Ikon --}}
-                                    <div class="flex-shrink-0 bg-indigo-100 text-indigo-600 rounded-lg w-14 h-14 flex items-center justify-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-7">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" />
+                                    <div
+                                        class="flex-shrink-0 bg-indigo-100 text-indigo-600 rounded-lg w-14 h-14 flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            stroke-width="1.5" stroke="currentColor" class="size-7">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" />
                                         </svg>
                                     </div>
-                                    
+
                                     {{-- Detail Alamat --}}
                                     <div class="flex flex-col justify-between">
                                         <div>
@@ -2770,11 +2800,17 @@ $classes = ($active ?? false)
                                             <p class="mt-1 text-gray-600 leading-relaxed">{{ $kontak['alamat'] }}</p>
                                             <p class="mt-2 text-sm text-gray-500">Telp: {{ $kontak['telepon'] }}</p>
                                         </div>
-                                        
+
                                         {{-- Link Google Maps --}}
-                                        <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($kontak['alamat']) }}" target="_blank" class="mt-3 text-sm font-semibold text-indigo-600 hover:text-indigo-500 inline-flex items-center">
+                                        <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($kontak['alamat']) }}"
+                                            target="_blank"
+                                            class="mt-3 text-sm font-semibold text-indigo-600 hover:text-indigo-500 inline-flex items-center">
                                             Lihat di Peta
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 ml-1"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="2" stroke="currentColor" class="w-4 h-4 ml-1">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                                            </svg>
                                         </a>
                                     </div>
                                 </div>
@@ -2790,13 +2826,15 @@ $classes = ($active ?? false)
         <footer class="bg-gray-900 text-white">
             <div class="mx-auto max-w-7xl px-6 py-12 md:flex md:items-center md:justify-between lg:px-8">
                 <div class="mt-8 md:order-1 md:mt-0">
-                    <p class="text-center text-xs leading-5 text-gray-400">Â© {{ date('Y') }} Klinik Andin. All rights reserved.</p>
+                    <p class="text-center text-xs leading-5 text-gray-400">Â© {{ date('Y') }} Klinik Andin. All
+                        rights reserved.</p>
                 </div>
             </div>
         </footer>
 
     </div>
 </body>
+
 </html>
 
 ===== resources\views\profile\partials\delete-user-form.blade.php =====
@@ -3039,85 +3077,80 @@ $classes = ($active ?? false)
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Klinik Andin - Sistem Pakar Penyakit Tulang</title>
 
-    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
 
-    <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-    </style>
 </head>
 
 <body class="antialiased bg-gray-50 text-gray-800">
-    <div class="relative min-h-screen flex flex-col">
+    <div class="flex flex-col min-h-screen">
 
-        <!-- Header -->
-        {{-- DENGAN KODE YANG BARU INI --}}
         {{-- resources/views/welcome.blade.php --}}
 
-        <header class="absolute inset-x-0 top-0 z-50">
-            <nav class="flex items-center justify-between p-6 lg:px-8" aria-label="Global">
+        <header class="absolute inset-x-0 top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm ring-1 ring-gray-900/5">
+            <nav class="flex items-center justify-between p-6 lg:px-8 max-w-7xl mx-auto" aria-label="Global">
+                {{-- LOGO DI KIRI --}}
                 <div class="flex lg:flex-1">
                     <a href="/" class="-m-1.5 p-1.5">
                         <span class="text-xl font-bold text-indigo-600">Klinik Andin</span>
                     </a>
                 </div>
-                {{-- HANYA TAMPILKAN LINK KONTAK --}}
-                <div class="hidden lg:flex lg:gap-x-12">
-                    <a href="{{ route('kontak') }}"
-                        class="text-sm font-semibold leading-6 text-gray-900 hover:text-indigo-600">Kontak</a>
-                </div>
-                <div class="hidden lg:flex lg:flex-1 lg:justify-end">
+                
+                {{-- SEMUA LINK NAVIGASI DI KANAN --}}
+                <div class="hidden lg:flex lg:items-center lg:gap-x-6">
+                    <a href="{{ route('kontak') }}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-indigo-600">Kontak</a>
+        
                     @if (Route::has('login'))
+                        {{-- Garis Pemisah Vertikal --}}
+                        <span class="h-6 w-px bg-gray-200" aria-hidden="true"></span>
+                        
                         @auth
-                            <a href="{{ url('/dashboard') }}"
-                                class="text-sm font-semibold leading-6 text-gray-900 hover:text-indigo-600">Dashboard <span
-                                    aria-hidden="true">â†’</span></a>
+                            <a href="{{ url('/dashboard') }}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-indigo-600">Dashboard <span aria-hidden="true">&rarr;</span></a>
                         @else
-                            <a href="{{ route('login') }}"
-                                class="text-sm font-semibold leading-6 text-gray-900 hover:text-indigo-600">Log in <span
-                                    aria-hidden="true">â†’</span></a>
+                            <a href="{{ route('login') }}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-indigo-600">Log in <span aria-hidden="true">&rarr;</span></a>
                         @endauth
                     @endif
-                </div>
-                <div class="flex lg:hidden">
-                    {{-- Mobile menu button can be added here --}}
                 </div>
             </nav>
         </header>
 
         <main class="flex-grow">
-            <!-- Hero Section -->
-            <div class="relative isolate px-6 pt-14 lg:px-8">
-                <div class="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
-                    aria-hidden="true">
-                    <div class="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#80ffc5] to-[#7c3aed] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"
-                        style="clip-path: polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)">
-                    </div>
-                </div>
-                <div class="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
-                    <div class="text-center">
-                        <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">Sistem Pakar Diagnosa
-                            Penyakit Tulang</h1>
-                        <p class="mt-6 text-lg leading-8 text-gray-600">Dapatkan diagnosa awal untuk keluhan terkait
-                            kesehatan tulang Anda dengan cepat dan akurat berdasarkan pengetahuan para ahli.</p>
-                        <div class="mt-10 flex items-center justify-center gap-x-6">
-                            <a href="{{ route('login') }}"
-                                class="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Mulai
-                                Diagnosa</a>
-                            <a href="#features" class="text-sm font-semibold leading-6 text-gray-900">Pelajari Lebih
-                                Lanjut <span aria-hidden="true">â†’</span></a>
+            <div class="relative bg-white">
+                <div class="mx-auto max-w-7xl">
+                    <div class="relative z-10 lg:w-full lg:max-w-2xl">
+                        {{-- Efek gradasi di samping --}}
+                        <svg class="absolute inset-y-0 right-8 hidden h-full w-80 translate-x-1/2 transform fill-white lg:block"
+                            viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                            <polygon points="0,0 90,0 50,100 0,100" />
+                        </svg>
+
+                        <div class="relative py-32 px-6 sm:py-40 lg:py-56 lg:px-8 lg:pr-0">
+                            <div class="mx-auto max-w-2xl lg:mx-0 lg:max-w-xl">
+                                <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">Sistem Pakar
+                                    Diagnosa Penyakit Tulang</h1>
+                                <p class="mt-6 text-lg leading-8 text-gray-600">Dapatkan diagnosa awal untuk keluhan
+                                    terkait kesehatan tulang Anda dengan cepat dan akurat berdasarkan pengetahuan para
+                                    ahli.</p>
+                                <div class="mt-10 flex items-center gap-x-6">
+                                    <a href="{{ route('login') }}"
+                                        class="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Mulai
+                                        Diagnosa</a>
+                                    <a href="#features" class="text-sm font-semibold leading-6 text-gray-900">Pelajari
+                                        Lebih Lanjut <span aria-hidden="true">â†’</span></a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+                {{-- Kolom Gambar --}}
+                <div class="bg-gray-50 lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
+                    <img class="aspect-[3/2] object-cover lg:aspect-auto lg:h-full lg:w-full"
+                        src="https://images.unsplash.com/photo-1527613426441-4da17471b66d?q=80&w=2067&auto=format&fit=crop"
+                        alt="Dokter memeriksa hasil rontgen">
+                </div>
             </div>
 
-            <!-- Features Section -->
             <section id="features" class="bg-white py-24 sm:py-32">
                 <div class="mx-auto max-w-7xl px-6 lg:px-8">
                     <div class="mx-auto max-w-2xl lg:text-center">
@@ -3131,6 +3164,7 @@ $classes = ($active ?? false)
                     </div>
                     <div class="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-4xl">
                         <dl class="grid max-w-xl grid-cols-1 gap-x-8 gap-y-10 lg:max-w-none lg:grid-cols-2 lg:gap-y-16">
+                            {{-- Feature 1 --}}
                             <div class="relative pl-16">
                                 <dt class="text-base font-semibold leading-7 text-gray-900">
                                     <div
@@ -3146,6 +3180,7 @@ $classes = ($active ?? false)
                                 <dd class="mt-2 text-base leading-7 text-gray-600">Pilih gejala-gejala yang Anda alami
                                     dari daftar yang komprehensif untuk memulai proses diagnosa.</dd>
                             </div>
+                            {{-- Feature 2 --}}
                             <div class="relative pl-16">
                                 <dt class="text-base font-semibold leading-7 text-gray-900">
                                     <div
@@ -3161,9 +3196,10 @@ $classes = ($active ?? false)
                                     Akurasi Tinggi
                                 </dt>
                                 <dd class="mt-2 text-base leading-7 text-gray-600">Sistem kami menggunakan basis
-                                    pengetahuan yang disusun oleh para ahli untuk memberikan hasil dengan tingkat
-                                    kecocokan yang dapat diandalkan.</dd>
+                                    pengetahuan yang disusun oleh para ahli untuk memberikan hasil yang dapat
+                                    diandalkan.</dd>
                             </div>
+                            {{-- Feature 3 --}}
                             <div class="relative pl-16">
                                 <dt class="text-base font-semibold leading-7 text-gray-900">
                                     <div
@@ -3176,10 +3212,10 @@ $classes = ($active ?? false)
                                     </div>
                                     Informasi & Solusi
                                 </dt>
-                                <dd class="mt-2 text-base leading-7 text-gray-600">Tidak hanya hasil diagnosa, Anda juga
-                                    akan mendapatkan deskripsi lengkap mengenai penyakit serta saran penanganan awal.
-                                </dd>
+                                <dd class="mt-2 text-base leading-7 text-gray-600">Dapatkan deskripsi lengkap mengenai
+                                    penyakit serta saran penanganan awal dari hasil diagnosa Anda.</dd>
                             </div>
+                            {{-- Feature 4 --}}
                             <div class="relative pl-16">
                                 <dt class="text-base font-semibold leading-7 text-gray-900">
                                     <div
@@ -3193,7 +3229,7 @@ $classes = ($active ?? false)
                                     Riwayat Diagnosa
                                 </dt>
                                 <dd class="mt-2 text-base leading-7 text-gray-600">Semua hasil diagnosa Anda tersimpan
-                                    dengan aman dan dapat diakses kembali kapan saja melalui halaman riwayat Anda.</dd>
+                                    dengan aman dan dapat diakses kembali kapan saja melalui riwayat Anda.</dd>
                             </div>
                         </dl>
                     </div>
@@ -3201,7 +3237,6 @@ $classes = ($active ?? false)
             </section>
         </main>
 
-        <!-- Footer -->
         <footer class="bg-gray-900 text-white">
             <div class="mx-auto max-w-7xl px-6 py-12 md:flex md:items-center md:justify-between lg:px-8">
                 <div class="mt-8 md:order-1 md:mt-0">
