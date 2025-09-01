@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Gejala;
-
+use Illuminate\Support\Facades\Auth;
 class GejalaController extends Controller
 {
     /**
@@ -37,8 +37,8 @@ class GejalaController extends Controller
 
         Gejala::create($request->all());
 
-        return redirect()->route('admin.gejala.index')
-            ->with('success', 'Data Gejala berhasil ditambahkan.');
+        $rolePrefix = Auth::user()->role;
+        return redirect()->route($rolePrefix . '.gejala.index')->with('success', 'Data gejala berhasil ditambahkan.');;
     }
 
     /**
@@ -61,8 +61,8 @@ class GejalaController extends Controller
 
         $gejala->update($request->all());
 
-        return redirect()->route('admin.gejala.index')
-            ->with('success', 'Data Gejala berhasil diperbarui.');
+        $rolePrefix = Auth::user()->role;
+        return redirect()->route($rolePrefix . '.gejala.index')->with('success', 'Data gejala berhasil diperbarui.');
     }
 
     /**
@@ -72,7 +72,7 @@ class GejalaController extends Controller
     {
         $gejala->delete();
 
-        return redirect()->route('admin.gejala.index')
-            ->with('success', 'Data Gejala berhasil dihapus.');
+        $rolePrefix = Auth::user()->role;
+        return redirect()->route($rolePrefix . '.gejala.index')->with('success', 'Data gejala berhasil dihapus.');
     }
 }

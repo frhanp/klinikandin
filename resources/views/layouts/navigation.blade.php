@@ -9,7 +9,7 @@
                         <span class="text-lg font-bold">S</span>
                     </div>
                 </div>
-    
+
                 {{-- Teks Logo --}}
                 <div>
                     <p class="text-base font-bold text-gray-800 leading-tight">
@@ -35,31 +35,30 @@
         </x-nav-link>
 
         {{-- Tampilkan menu ini jika rolenya 'admin' ATAU 'dokter' --}}
-        @if (in_array(Auth::user()->role, ['admin', 'dokter']))
+        {{-- Menu Khusus Admin --}}
+        @if (Auth::user()->role == 'admin')
+            <x-nav-link :href="route('admin.gejala.index')" :active="request()->routeIs('admin.gejala.*')">
+                {{ __('Gejala') }}
+            </x-nav-link>
+            <x-nav-link :href="route('admin.penyakit.index')" :active="request()->routeIs('admin.penyakit.*')">
+                {{ __('Penyakit') }}
+            </x-nav-link>
+            <x-nav-link :href="route('admin.dokter.index')" :active="request()->routeIs('admin.dokter.*')">
+                {{ __('Dokter') }}
+            </x-nav-link>
+        @endif
 
-            {{-- HANYA ADMIN YANG BISA MELIHAT INI --}}
-            @if (Auth::user()->role == 'admin')
-                <x-nav-link :href="route('admin.gejala.index')" :active="request()->routeIs('admin.gejala.*')">
-                    {{ __('Gejala') }}
-                </x-nav-link>
-                <x-nav-link :href="route('admin.penyakit.index')" :active="request()->routeIs('admin.penyakit.*')">
-                    {{ __('Penyakit') }}
-                </x-nav-link>
-                <x-nav-link :href="route('admin.dokter.index')" :active="request()->routeIs('admin.dokter.*')">
-                    {{ __('Dokter') }}
-                </x-nav-link>
-            @endif
-
-            {{-- ADMIN DAN DOKTER BISA MELIHAT INI --}}
-            {{-- Kita sesuaikan route-nya agar dinamis berdasarkan role --}}
-            @php
-                $ruleRoute = Auth::user()->role == 'admin' ? route('admin.rule.index') : route('dokter.rule.index');
-                $isRuleActive = request()->routeIs('admin.rule.*') || request()->routeIs('dokter.rule.*');
-            @endphp
-            <x-nav-link :href="$ruleRoute" :active="$isRuleActive">
+        {{-- Menu Khusus Dokter --}}
+        @if (Auth::user()->role == 'dokter')
+            <x-nav-link :href="route('dokter.gejala.index')" :active="request()->routeIs('dokter.gejala.*')">
+                {{ __('Gejala') }}
+            </x-nav-link>
+            <x-nav-link :href="route('dokter.penyakit.index')" :active="request()->routeIs('dokter.penyakit.*')">
+                {{ __('Penyakit') }}
+            </x-nav-link>
+            <x-nav-link :href="route('dokter.rule.index')" :active="request()->routeIs('dokter.rule.*')">
                 {{ __('Rule Base') }}
             </x-nav-link>
-
         @endif
         {{-- Navigasi Khusus Pengguna Biasa --}}
 

@@ -9,29 +9,26 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
-                    <form action="{{ route('admin.gejala.store') }}" method="POST">
+                    @php $rolePrefix = Auth::user()->role; @endphp
+                    <form action="{{ route($rolePrefix . '.gejala.store') }}" method="POST">
                         @csrf
-                        <div class="space-y-6">
-                            {{-- Kode Gejala --}}
-                            <div>
-                                <x-input-label for="kode_gejala" :value="__('Kode Gejala (Contoh: G01)')" />
-                                <x-text-input id="kode_gejala" name="kode_gejala" type="text" class="mt-1 block w-full" :value="old('kode_gejala')" required autofocus />
-                                <x-input-error class="mt-2" :messages="$errors->get('kode_gejala')" />
-                            </div>
-
-                            {{-- Nama Gejala --}}
-                            <div>
-                                <x-input-label for="nama_gejala" :value="__('Nama Gejala')" />
-                                <x-text-input id="nama_gejala" name="nama_gejala" type="text" class="mt-1 block w-full" :value="old('nama_gejala')" required />
-                                <x-input-error class="mt-2" :messages="$errors->get('nama_gejala')" />
-                            </div>
-
-                            <div class="flex items-center gap-4">
-                                <x-primary-button>{{ __('Simpan') }}</x-primary-button>
-                                <a href="{{ route('admin.gejala.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
-                                    {{ __('Batal') }}
-                                </a>
-                            </div>
+                        <div class="mb-4">
+                            <label for="kode_gejala" class="block font-medium text-sm text-gray-700">Kode Gejala</label>
+                            <input type="text" name="kode_gejala" id="kode_gejala" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" value="{{ old('kode_gejala') }}" required>
+                            @error('kode_gejala')
+                                <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div class="mb-4">
+                            <label for="nama_gejala" class="block font-medium text-sm text-gray-700">Nama Gejala</label>
+                            <input type="text" name="nama_gejala" id="nama_gejala" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" value="{{ old('nama_gejala') }}" required>
+                             @error('nama_gejala')
+                                <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div class="flex items-center justify-end mt-4">
+                            <a href="{{ route($rolePrefix . '.gejala.index') }}" class="text-sm text-gray-600 hover:text-gray-900 mr-4">Batal</a>
+                            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Simpan</button>
                         </div>
                     </form>
                 </div>

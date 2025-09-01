@@ -50,10 +50,10 @@
                             <p class="font-semibold">Kelola Dokter</p>
                             <p class="text-sm text-indigo-100 mt-1">Tambah, edit, atau hapus data dokter.</p>
                         </a>
-                        <a href="{{ route('admin.rule.index') }}" class="rounded-lg bg-indigo-600 px-4 py-5 text-white shadow hover:bg-indigo-700 transition">
+                        {{-- <a href="{{ route('admin.rule.index') }}" class="rounded-lg bg-indigo-600 px-4 py-5 text-white shadow hover:bg-indigo-700 transition">
                             <p class="font-semibold">Kelola Aturan (Rule Base)</p>
                             <p class="text-sm text-indigo-100 mt-1">Hubungkan gejala dengan penyakit.</p>
-                        </a>
+                        </a> --}}
                     </div>
                 </div>
 

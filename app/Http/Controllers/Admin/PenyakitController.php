@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Penyakit;
+use Illuminate\Support\Facades\Auth;
 
 class PenyakitController extends Controller
 {
@@ -39,8 +40,8 @@ class PenyakitController extends Controller
 
         Penyakit::create($request->all());
 
-        return redirect()->route('admin.penyakit.index')
-            ->with('success', 'Data Penyakit berhasil ditambahkan.');
+        $rolePrefix = Auth::user()->role;
+        return redirect()->route($rolePrefix . '.penyakit.index')->with('success', 'Data penyakit berhasil ditambahkan.');
     }
 
     /**
@@ -65,8 +66,8 @@ class PenyakitController extends Controller
 
         $penyakit->update($request->all());
 
-        return redirect()->route('admin.penyakit.index')
-            ->with('success', 'Data Penyakit berhasil diperbarui.');
+        $rolePrefix = Auth::user()->role;
+        return redirect()->route($rolePrefix . '.penyakit.index')->with('success', 'Data penyakit berhasil diperbarui.');
     }
 
     /**
@@ -76,7 +77,7 @@ class PenyakitController extends Controller
     {
         $penyakit->delete();
 
-        return redirect()->route('admin.penyakit.index')
-            ->with('success', 'Data Penyakit berhasil dihapus.');
+        $rolePrefix = Auth::user()->role;
+        return redirect()->route($rolePrefix . '.penyakit.index')->with('success', 'Data penyakit berhasil dihapus.');
     }
 }
