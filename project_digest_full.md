@@ -1,9 +1,7 @@
 ﻿# Project Digest (Full Content)
-_Generated: 2025-08-26 12:28:33_
+_Generated: 2025-09-01 16:24:01_
 **Root:** D:\Laragon\www\klinikandin
 
-
-## Struktur Proyek (filtered, no depth limit)
 ```
 .git
 app
@@ -43,10 +41,13 @@ app\Http\Middleware
 app\Http\Requests
 app\Http\Controllers\Admin
 app\Http\Controllers\Auth
+app\Http\Controllers\Dokter
+app\Http\Controllers\User
 app\Http\Controllers\Controller.php
 app\Http\Controllers\DiagnosaController.php
 app\Http\Controllers\HomeController.php
 app\Http\Controllers\ProfileController.php
+app\Http\Controllers\Admin\DashboardController.php
 app\Http\Controllers\Admin\GejalaController.php
 app\Http\Controllers\Admin\PenyakitController.php
 app\Http\Controllers\Admin\RuleController.php
@@ -59,6 +60,8 @@ app\Http\Controllers\Auth\PasswordController.php
 app\Http\Controllers\Auth\PasswordResetLinkController.php
 app\Http\Controllers\Auth\RegisteredUserController.php
 app\Http\Controllers\Auth\VerifyEmailController.php
+app\Http\Controllers\Dokter\DashboardController.php
+app\Http\Controllers\User\DashboardController.php
 app\Http\Middleware\RoleMiddleware.php
 app\Http\Requests\Auth
 app\Http\Requests\ProfileUpdateRequest.php
@@ -195,6 +198,7 @@ storage\framework\cache\data\.gitignore
 storage\framework\sessions\.gitignore
 storage\framework\testing\.gitignore
 storage\framework\views\.gitignore
+storage\framework\views\08170422efbc6844d902adfdec948f66.php
 storage\framework\views\0c42d7137be0603e1fc772b02f194211.php
 storage\framework\views\0c9d480842e68a02e7709367b1f6b419.php
 storage\framework\views\0f70ab1c1e2860cc792400f02b11d64a.php
@@ -267,11 +271,11 @@ Branch:
 main
 
 Last 5 commits:
+26cb2dc susun hak akses dan dashboard dokter
 9690027 perbaiki tampilan diagnosa
 65ed27c tambah kontak pada landing
 e500c46 fix landing
 f9a420c feat: Implement main application features
-82f810a first commit
 ```
 
 
@@ -365,14 +369,26 @@ Artisan::command('inspire', function () {
 ===== routes\web.php =====
 <?php
 
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
+
+// Controller Umum
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\DiagnosaController;
+
+// Controller Admin
 use App\Http\Controllers\Admin\GejalaController;
 use App\Http\Controllers\Admin\PenyakitController;
 use App\Http\Controllers\Admin\RuleController;
-use App\Http\Controllers\DiagnosaController;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\HomeController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController; // <-- Diberi alias
+
+// Controller Dokter
+use App\Http\Controllers\Dokter\DashboardController as DokterDashboardController; // <-- Diberi alias
+
+// Controller User/Pengguna
+use App\Http\Controllers\User\DashboardController as UserDashboardController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -382,58 +398,58 @@ use App\Http\Controllers\HomeController;
 // Halaman utama
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('home');
 
 Route::get('/kontak', [HomeController::class, 'kontak'])->name('kontak');
 
 // Grup untuk semua pengguna yang sudah otentikasi
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    // Rute dashboard utama yang akan mengarahkan berdasarkan peran
     Route::get('/dashboard', function () {
         $user = Auth::user();
-
-        if ($user->role === 'admin' || $user->role === 'dokter') {
-            return redirect()->route('admin.dashboard'); // Redirect Admin & Dokter ke dashboard mereka
+        if ($user->role === 'admin') {
+            return redirect()->route('admin.dashboard');
         }
-        
-        // Pengguna biasa tetap di dashboard umum
-        return view('dashboard');
+        if ($user->role === 'dokter') {
+            return redirect()->route('dokter.dashboard');
+        }
+        return (new UserDashboardController)->index();
     })->name('dashboard');
 
-    // Rute untuk manajemen profil pengguna
+    // Rute Profil
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Rute Diagnosa untuk Pengguna
-    Route::get('/diagnosa', [DiagnosaController::class, 'index'])->name('diagnosa.index');
-    Route::post('/diagnosa', [DiagnosaController::class, 'process'])->name('diagnosa.process');
-    Route::get('/diagnosa/hasil/{diagnosaHistory}', [DiagnosaController::class, 'hasil'])->name('diagnosa.hasil');
-    Route::get('/diagnosa/riwayat', [DiagnosaController::class, 'riwayat'])->name('diagnosa.riwayat');
-
+    // Rute Diagnosa
+    Route::middleware('role:pengguna')->prefix('diagnosa')->name('diagnosa.')->group(function () {
+        Route::get('/', [DiagnosaController::class, 'index'])->name('index');
+        Route::post('/', [DiagnosaController::class, 'process'])->name('process');
+        Route::get('/hasil/{diagnosaHistory}', [DiagnosaController::class, 'hasil'])->name('hasil');
+        Route::get('/riwayat', [DiagnosaController::class, 'riwayat'])->name('riwayat');
+    });
 });
 
-// Grup khusus untuk ADMIN dan DOKTER (Manajemen Data Master)
-Route::middleware(['auth', 'verified', 'role:admin,dokter'])
-    ->prefix('admin') // URL akan diawali dengan /admin/
-    ->name('admin.') // Nama rute akan diawali dengan admin.
-    ->group(function () {
-        
-    Route::get('/dashboard', function () {
-        if (Auth::user()->role == 'admin') {
-            return view('admin.dashboard');
-        }
-        return view('dokter.dashboard');
-    })->name('dashboard');
 
-    // Rute CRUDs
-    Route::resource('gejala', GejalaController::class);
-    Route::resource('penyakit', PenyakitController::class);
+// RUTE KHUSUS UNTUK ADMIN
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', AdminDashboardController::class)->name('dashboard'); // <-- Gunakan alias
+    Route::resource('gejala', GejalaController::class)->except(['show']);
+    Route::resource('penyakit', PenyakitController::class)->except(['show']);
     Route::get('rule', [RuleController::class, 'index'])->name('rule.index');
     Route::get('rule/{penyakit}/edit', [RuleController::class, 'edit'])->name('rule.edit');
     Route::put('rule/{penyakit}', [RuleController::class, 'update'])->name('rule.update');
 });
+
+
+// RUTE KHUSUS UNTUK DOKTER
+Route::middleware(['auth', 'role:dokter'])->prefix('dokter')->name('dokter.')->group(function () {
+    Route::get('/dashboard', [DokterDashboardController::class, 'index'])->name('dashboard'); // <-- Gunakan alias
+    Route::get('rule', [RuleController::class, 'index'])->name('rule.index');
+    Route::get('rule/{penyakit}/edit', [RuleController::class, 'edit'])->name('rule.edit');
+    Route::put('rule/{penyakit}', [RuleController::class, 'update'])->name('rule.update');
+});
+
 
 require __DIR__ . '/auth.php';
 
@@ -443,65 +459,105 @@ require __DIR__ . '/auth.php';
 ## Routes (from command)
 ```
 
-  GET|HEAD        / ............................................................................................... 
-  GET|HEAD        _debugbar/assets/javascript ......... debugbar.assets.js ΓÇ║ Barryvdh\Debugbar ΓÇ║ AssetController@js
-  GET|HEAD        _debugbar/assets/stylesheets ...... debugbar.assets.css ΓÇ║ Barryvdh\Debugbar ΓÇ║ AssetController@css
-  DELETE          _debugbar/cache/{key}/{tags?} debugbar.cache.delete ΓÇ║ Barryvdh\Debugbar ΓÇ║ CacheController@delete
-  GET|HEAD        _debugbar/clockwork/{id} debugbar.clockwork ΓÇ║ Barryvdh\Debugbar ΓÇ║ OpenHandlerController@clockwork
-  GET|HEAD        _debugbar/open .......... debugbar.openhandler ΓÇ║ Barryvdh\Debugbar ΓÇ║ OpenHandlerController@handle
-  POST            _debugbar/queries/explain debugbar.queries.explain ΓÇ║ Barryvdh\Debugbar ΓÇ║ QueriesController@explaΓÇª
-  GET|HEAD        admin/dashboard ................................................................. admin.dashboard
-  GET|HEAD        admin/gejala .................................. admin.gejala.index ΓÇ║ Admin\GejalaController@index
-  POST            admin/gejala .................................. admin.gejala.store ΓÇ║ Admin\GejalaController@store
-  GET|HEAD        admin/gejala/create ......................... admin.gejala.create ΓÇ║ Admin\GejalaController@create
-  GET|HEAD        admin/gejala/{gejala} ........................... admin.gejala.show ΓÇ║ Admin\GejalaController@show
-  PUT|PATCH       admin/gejala/{gejala} ....................... admin.gejala.update ΓÇ║ Admin\GejalaController@update
-  DELETE          admin/gejala/{gejala} ..................... admin.gejala.destroy ΓÇ║ Admin\GejalaController@destroy
-  GET|HEAD        admin/gejala/{gejala}/edit ...................... admin.gejala.edit ΓÇ║ Admin\GejalaController@edit
-  GET|HEAD        admin/penyakit ............................ admin.penyakit.index ΓÇ║ Admin\PenyakitController@index
-  POST            admin/penyakit ............................ admin.penyakit.store ΓÇ║ Admin\PenyakitController@store
-  GET|HEAD        admin/penyakit/create ................... admin.penyakit.create ΓÇ║ Admin\PenyakitController@create
-  GET|HEAD        admin/penyakit/{penyakit} ................... admin.penyakit.show ΓÇ║ Admin\PenyakitController@show
-  PUT|PATCH       admin/penyakit/{penyakit} ............... admin.penyakit.update ΓÇ║ Admin\PenyakitController@update
-  DELETE          admin/penyakit/{penyakit} ............. admin.penyakit.destroy ΓÇ║ Admin\PenyakitController@destroy
-  GET|HEAD        admin/penyakit/{penyakit}/edit .............. admin.penyakit.edit ΓÇ║ Admin\PenyakitController@edit
-  GET|HEAD        admin/rule ........................................ admin.rule.index ΓÇ║ Admin\RuleController@index
-  PUT             admin/rule/{penyakit} ........................... admin.rule.update ΓÇ║ Admin\RuleController@update
-  GET|HEAD        admin/rule/{penyakit}/edit .......................... admin.rule.edit ΓÇ║ Admin\RuleController@edit
-  GET|HEAD        confirm-password ..................... password.confirm ΓÇ║ Auth\ConfirmablePasswordController@show
-  POST            confirm-password ....................................... Auth\ConfirmablePasswordController@store
-  GET|HEAD        dashboard ............................................................................. dashboard
-  GET|HEAD        diagnosa .............................................. diagnosa.index ΓÇ║ DiagnosaController@index
-  POST            diagnosa .......................................... diagnosa.process ΓÇ║ DiagnosaController@process
-  GET|HEAD        diagnosa/hasil/{diagnosaHistory} ...................... diagnosa.hasil ΓÇ║ DiagnosaController@hasil
-  GET|HEAD        diagnosa/riwayat .................................. diagnosa.riwayat ΓÇ║ DiagnosaController@riwayat
-  POST            email/verification-notification verification.send ΓÇ║ Auth\EmailVerificationNotificationControllerΓÇª
-  GET|HEAD        forgot-password ...................... password.request ΓÇ║ Auth\PasswordResetLinkController@create
-  POST            forgot-password ......................... password.email ΓÇ║ Auth\PasswordResetLinkController@store
-  GET|HEAD        kontak ........................................................... kontak ΓÇ║ HomeController@kontak
-  GET|HEAD        login ........................................ login ΓÇ║ Auth\AuthenticatedSessionController@create
-  POST            login ................................................. Auth\AuthenticatedSessionController@store
-  POST            logout ..................................... logout ΓÇ║ Auth\AuthenticatedSessionController@destroy
-  PUT             password ....................................... password.update ΓÇ║ Auth\PasswordController@update
-  GET|HEAD        profile ................................................... profile.edit ΓÇ║ ProfileController@edit
-  PATCH           profile ............................................... profile.update ΓÇ║ ProfileController@update
-  DELETE          profile ............................................. profile.destroy ΓÇ║ ProfileController@destroy
-  GET|HEAD        register ........................................ register ΓÇ║ Auth\RegisteredUserController@create
-  POST            register .................................................... Auth\RegisteredUserController@store
-  POST            reset-password ................................ password.store ΓÇ║ Auth\NewPasswordController@store
-  GET|HEAD        reset-password/{token} ....................... password.reset ΓÇ║ Auth\NewPasswordController@create
-  GET|HEAD        storage/{path} .................................................................... storage.local
-  GET|HEAD        up .............................................................................................. 
-  GET|HEAD        verify-email ....................... verification.notice ΓÇ║ Auth\EmailVerificationPromptController
-  GET|HEAD        verify-email/{id}/{hash} ....................... verification.verify ΓÇ║ Auth\VerifyEmailController
+  GET|HEAD        / ................................................................................................................... home
+  GET|HEAD        _debugbar/assets/javascript .................................. debugbar.assets.js ΓÇ║ Barryvdh\Debugbar ΓÇ║ AssetController@js
+  GET|HEAD        _debugbar/assets/stylesheets ............................... debugbar.assets.css ΓÇ║ Barryvdh\Debugbar ΓÇ║ AssetController@css
+  DELETE          _debugbar/cache/{key}/{tags?} ......................... debugbar.cache.delete ΓÇ║ Barryvdh\Debugbar ΓÇ║ CacheController@delete
+  GET|HEAD        _debugbar/clockwork/{id} ........................ debugbar.clockwork ΓÇ║ Barryvdh\Debugbar ΓÇ║ OpenHandlerController@clockwork
+  GET|HEAD        _debugbar/open ................................... debugbar.openhandler ΓÇ║ Barryvdh\Debugbar ΓÇ║ OpenHandlerController@handle
+  POST            _debugbar/queries/explain ....................... debugbar.queries.explain ΓÇ║ Barryvdh\Debugbar ΓÇ║ QueriesController@explain
+  GET|HEAD        admin/dashboard .............................................................. admin.dashboard ΓÇ║ Admin\DashboardController
+  GET|HEAD        admin/gejala ........................................................... admin.gejala.index ΓÇ║ Admin\GejalaController@index
+  POST            admin/gejala ........................................................... admin.gejala.store ΓÇ║ Admin\GejalaController@store
+  GET|HEAD        admin/gejala/create .................................................. admin.gejala.create ΓÇ║ Admin\GejalaController@create
+  PUT|PATCH       admin/gejala/{gejala} ................................................ admin.gejala.update ΓÇ║ Admin\GejalaController@update
+  DELETE          admin/gejala/{gejala} .............................................. admin.gejala.destroy ΓÇ║ Admin\GejalaController@destroy
+  GET|HEAD        admin/gejala/{gejala}/edit ............................................... admin.gejala.edit ΓÇ║ Admin\GejalaController@edit
+  GET|HEAD        admin/penyakit ..................................................... admin.penyakit.index ΓÇ║ Admin\PenyakitController@index
+  POST            admin/penyakit ..................................................... admin.penyakit.store ΓÇ║ Admin\PenyakitController@store
+  GET|HEAD        admin/penyakit/create ............................................ admin.penyakit.create ΓÇ║ Admin\PenyakitController@create
+  PUT|PATCH       admin/penyakit/{penyakit} ........................................ admin.penyakit.update ΓÇ║ Admin\PenyakitController@update
+  DELETE          admin/penyakit/{penyakit} ...................................... admin.penyakit.destroy ΓÇ║ Admin\PenyakitController@destroy
+  GET|HEAD        admin/penyakit/{penyakit}/edit ....................................... admin.penyakit.edit ΓÇ║ Admin\PenyakitController@edit
+  GET|HEAD        admin/rule ................................................................. admin.rule.index ΓÇ║ Admin\RuleController@index
+  PUT             admin/rule/{penyakit} .................................................... admin.rule.update ΓÇ║ Admin\RuleController@update
+  GET|HEAD        admin/rule/{penyakit}/edit ................................................... admin.rule.edit ΓÇ║ Admin\RuleController@edit
+  GET|HEAD        confirm-password .............................................. password.confirm ΓÇ║ Auth\ConfirmablePasswordController@show
+  POST            confirm-password ................................................................ Auth\ConfirmablePasswordController@store
+  GET|HEAD        dashboard ...................................................................................................... dashboard
+  GET|HEAD        diagnosa ....................................................................... diagnosa.index ΓÇ║ DiagnosaController@index
+  POST            diagnosa ................................................................... diagnosa.process ΓÇ║ DiagnosaController@process
+  GET|HEAD        diagnosa/hasil/{diagnosaHistory} ............................................... diagnosa.hasil ΓÇ║ DiagnosaController@hasil
+  GET|HEAD        diagnosa/riwayat ........................................................... diagnosa.riwayat ΓÇ║ DiagnosaController@riwayat
+  GET|HEAD        dokter/dashboard ..................................................... dokter.dashboard ΓÇ║ Dokter\DashboardController@index
+  GET|HEAD        dokter/rule ............................................................... dokter.rule.index ΓÇ║ Admin\RuleController@index
+  PUT             dokter/rule/{penyakit} .................................................. dokter.rule.update ΓÇ║ Admin\RuleController@update
+  GET|HEAD        dokter/rule/{penyakit}/edit ................................................. dokter.rule.edit ΓÇ║ Admin\RuleController@edit
+  POST            email/verification-notification ................... verification.send ΓÇ║ Auth\EmailVerificationNotificationController@store
+  GET|HEAD        forgot-password ............................................... password.request ΓÇ║ Auth\PasswordResetLinkController@create
+  POST            forgot-password .................................................. password.email ΓÇ║ Auth\PasswordResetLinkController@store
+  GET|HEAD        kontak .................................................................................... kontak ΓÇ║ HomeController@kontak
+  GET|HEAD        login ................................................................. login ΓÇ║ Auth\AuthenticatedSessionController@create
+  POST            login .......................................................................... Auth\AuthenticatedSessionController@store
+  POST            logout .............................................................. logout ΓÇ║ Auth\AuthenticatedSessionController@destroy
+  PUT             password ................................................................ password.update ΓÇ║ Auth\PasswordController@update
+  GET|HEAD        profile ............................................................................ profile.edit ΓÇ║ ProfileController@edit
+  PATCH           profile ........................................................................ profile.update ΓÇ║ ProfileController@update
+  DELETE          profile ...................................................................... profile.destroy ΓÇ║ ProfileController@destroy
+  GET|HEAD        register ................................................................. register ΓÇ║ Auth\RegisteredUserController@create
+  POST            register ............................................................................. Auth\RegisteredUserController@store
+  POST            reset-password ......................................................... password.store ΓÇ║ Auth\NewPasswordController@store
+  GET|HEAD        reset-password/{token} ................................................ password.reset ΓÇ║ Auth\NewPasswordController@create
+  GET|HEAD        storage/{path} ............................................................................................. storage.local
+  GET|HEAD        up ....................................................................................................................... 
+  GET|HEAD        verify-email ................................................ verification.notice ΓÇ║ Auth\EmailVerificationPromptController
+  GET|HEAD        verify-email/{id}/{hash} ................................................ verification.verify ΓÇ║ Auth\VerifyEmailController
 
-                                                                                                Showing [51] routes
+                                                                                                                         Showing [53] routes
 
 ```
 
 
 ## Controllers Content
 ```
+===== app\Http\Controllers\Admin\DashboardController.php =====
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\User;
+use App\Models\Penyakit;
+use App\Models\Gejala;
+use App\Models\DiagnosaHistory;
+
+class DashboardController extends Controller
+{
+    /**
+     * Handle the incoming request.
+     */
+    public function __invoke(Request $request)
+    {
+        // 1. Ambil semua data statistik
+        $stats = [
+            'pengguna' => User::where('role', 'pengguna')->count(),
+            'dokter' => User::where('role', 'dokter')->count(),
+            'penyakit' => Penyakit::count(),
+            'gejala' => Gejala::count(),
+            'total_diagnosa' => DiagnosaHistory::count(),
+        ];
+
+        // 2. Ambil 5 aktivitas diagnosa terakhir
+        $aktivitasTerakhir = DiagnosaHistory::with(['user', 'penyakit'])
+                                            ->latest()
+                                            ->take(5)
+                                            ->get();
+
+        return view('admin.dashboard', compact('stats', 'aktivitasTerakhir'));
+    }
+}
+
 ===== app\Http\Controllers\Admin\GejalaController.php =====
 <?php
 
@@ -675,6 +731,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Penyakit;
 use App\Models\Gejala;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class RuleController extends Controller
 {
@@ -692,11 +749,15 @@ class RuleController extends Controller
      */
     public function edit(Penyakit $penyakit)
     {
-        $gejalas = Gejala::orderBy('kode_gejala')->get();
-        // Ambil ID gejala yang sudah berelasi dengan penyakit ini
-        $gejalaPenyakit = $penyakit->gejalas->pluck('id')->toArray();
+        $gejalas = Gejala::all();
 
-        return view('admin.rule.edit', compact('penyakit', 'gejalas', 'gejalaPenyakit'));
+        // =================================================================
+        // ===== INI BAGIAN YANG HILANG DAN SEKARANG SUDAH DIPERBAIKI =====
+        // Mengambil semua ID gejala yang sudah berelasi dengan penyakit ini
+        $penyakitGejalaIds = $penyakit->gejalas->pluck('id')->toArray();
+        // =================================================================
+
+        return view('admin.rule.edit', compact('penyakit', 'gejalas', 'penyakitGejalaIds'));
     }
 
     /**
@@ -713,8 +774,13 @@ class RuleController extends Controller
         // Method ini akan otomatis menambah/menghapus relasi di tabel pivot 'rules'
         $penyakit->gejalas()->sync($request->gejala_ids);
 
-        return redirect()->route('admin.rule.index')
-            ->with('success', 'Basis aturan untuk penyakit ' . $penyakit->nama_penyakit . ' berhasil diperbarui.');
+        // =================================================================
+        // ===== INI BAGIAN YANG DIPERBAIKI =====
+        // Tentukan rute kembali berdasarkan peran pengguna yang sedang login
+        $returnRoute = Auth::user()->role == 'admin' ? 'admin.rule.index' : 'dokter.rule.index';
+        // =================================================================
+
+        return redirect()->route($returnRoute)->with('success', 'Rule base berhasil diperbarui.');
     }
 }
 
@@ -1077,6 +1143,89 @@ class VerifyEmailController extends Controller
         }
 
         return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
+    }
+}
+
+===== app\Http\Controllers\Dokter\DashboardController.php =====
+<?php
+
+namespace App\Http\Controllers\Dokter;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\DiagnosaHistory;
+use Illuminate\Support\Facades\DB;
+
+class DashboardController extends Controller
+{
+    public function index()
+    {
+        // 1. Ambil data diagnosa 12 bulan terakhir
+        $stats = DiagnosaHistory::query()
+            ->select(
+                DB::raw("DATE_FORMAT(created_at, '%Y-%m') as bulan"),
+                'penyakit_id',
+                DB::raw('count(*) as jumlah')
+            )
+            ->where('created_at', '>=', now()->subYear())
+            ->groupBy('bulan', 'penyakit_id')
+            ->orderBy('bulan')
+            ->with('penyakit:id,nama_penyakit') // Eager load untuk efisiensi
+            ->get();
+
+        // 2. Siapkan data untuk format Chart.js
+        $labels = $stats->pluck('bulan')->unique()->sort()->values();
+        $penyakits = $stats->pluck('penyakit.nama_penyakit')->unique()->values();
+        $datasets = [];
+        $colors = ['rgba(75, 192, 192, 0.6)', 'rgba(255, 99, 132, 0.6)', 'rgba(54, 162, 235, 0.6)', 'rgba(255, 206, 86, 0.6)', 'rgba(153, 102, 255, 0.6)'];
+
+        foreach ($penyakits as $index => $namaPenyakit) {
+            $data = [];
+            foreach ($labels as $label) {
+                $jumlah = $stats->first(function ($item) use ($label, $namaPenyakit) {
+                    return $item->bulan === $label && $item->penyakit->nama_penyakit === $namaPenyakit;
+                })->jumlah ?? 0;
+                $data[] = $jumlah;
+            }
+
+            $datasets[] = [
+                'label' => $namaPenyakit,
+                'data' => $data,
+                'backgroundColor' => $colors[$index % count($colors)],
+                'borderColor' => str_replace('0.6', '1', $colors[$index % count($colors)]),
+                'borderWidth' => 1
+            ];
+        }
+
+        // 3. Konversi ke format JSON untuk dikirim ke view
+        $chartData = json_encode(['labels' => $labels, 'datasets' => $datasets]);
+
+        return view('dokter.dashboard', compact('chartData'));
+    }
+}
+
+===== app\Http\Controllers\User\DashboardController.php =====
+<?php
+
+namespace App\Http\Controllers\User;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\DiagnosaHistory;
+use Illuminate\Support\Facades\Auth;
+
+class DashboardController extends Controller
+{
+    public function index()
+    {
+        // Ambil 3 riwayat diagnosa terakhir dari pengguna yang sedang login
+        $riwayatTerakhir = DiagnosaHistory::where('user_id', Auth::id())
+                                          ->with('penyakit') // Eager load untuk efisiensi
+                                          ->latest() // Urutkan dari yang terbaru
+                                          ->take(3) // Ambil 3 data saja
+                                          ->get();
+
+        return view('dashboard', compact('riwayatTerakhir'));
     }
 }
 
@@ -1732,45 +1881,69 @@ class Rule extends Model
 ===== resources\views\admin\rule\edit.blade.php =====
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Kelola Aturan untuk: <span class="text-indigo-600">{{ $penyakit->nama_penyakit }}</span>
-        </h2>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+            <div>
+                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                    {{ __('Kelola Basis Aturan') }}
+                </h2>
+                <p class="mt-1 text-sm text-gray-500">
+                    Pilih gejala yang relevan untuk penyakit: <strong class="font-medium text-gray-900">{{ $penyakit->nama_penyakit }}</strong>
+                </p>
+            </div>
+        </div>
     </x-slot>
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    <form action="{{ route('admin.rule.update', $penyakit) }}" method="POST">
-                        @csrf
-                        @method('PUT')
-                        <div class="mb-6">
-                            <p class="text-gray-700">Pilih semua gejala yang sesuai untuk penyakit ini:</p>
-                        </div>
+            @php
+                // Tentukan route action form berdasarkan role
+                $updateRoute = Auth::user()->role == 'admin' 
+                    ? route('admin.rule.update', $penyakit->id) 
+                    : route('dokter.rule.update', $penyakit->id);
+                
+                $backRoute = Auth::user()->role == 'admin' 
+                    ? route('admin.rule.index') 
+                    : route('dokter.rule.index');
+            @endphp
 
-                        {{-- Daftar Checkbox Gejala --}}
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            @forelse ($gejalas as $gejala)
-                                <label class="flex items-center space-x-3 p-3 border rounded-md hover:bg-gray-50">
-                                    <input type="checkbox" name="gejala_ids[]" value="{{ $gejala->id }}"
-                                        class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
-                                        {{ in_array($gejala->id, $gejalaPenyakit) ? 'checked' : '' }}>
-                                    <span>{{ $gejala->kode_gejala }} - {{ $gejala->nama_gejala }}</span>
-                                </label>
-                            @empty
-                                <p class="text-gray-500 col-span-full">Data gejala belum tersedia. Silakan tambah data gejala terlebih dahulu.</p>
-                            @endforelse
-                        </div>
+            <form action="{{ $updateRoute }}" method="POST">
+                @csrf
+                @method('PUT')
 
-                        <div class="mt-8 flex items-center gap-4">
-                            <x-primary-button>{{ __('Simpan Aturan') }}</x-primary-button>
-                            <a href="{{ route('admin.rule.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50">
-                                {{ __('Kembali') }}
-                            </a>
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6 md:p-8">
+                        {{-- Layout Grid untuk Gejala --}}
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            @foreach ($gejalas as $gejala)
+                                <div>
+                                    {{-- Setiap gejala dibungkus dalam label yang berfungsi sebagai kartu --}}
+                                    <label for="gejala-{{ $gejala->id }}" 
+                                        class="has-[:checked]:bg-indigo-50 has-[:checked]:ring-indigo-400 has-[:checked]:text-indigo-900
+                                               flex items-center p-4 rounded-lg ring-1 ring-gray-200 
+                                               cursor-pointer transition-all duration-150 hover:bg-gray-50">
+                                        
+                                        <input type="checkbox" name="gejala_ids[]" value="{{ $gejala->id }}"
+                                            id="gejala-{{ $gejala->id }}" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                            {{ in_array($gejala->id, $penyakitGejalaIds) ? 'checked' : '' }}>
+                                        
+                                        <span class="ml-3 font-medium text-sm text-gray-700">
+                                            {{ $gejala->nama_gejala }}
+                                        </span>
+                                    </label>
+                                </div>
+                            @endforeach
                         </div>
-                    </form>
+                    </div>
+
+                    {{-- Footer Aksi (Simpan & Kembali) --}}
+                    <div class="flex items-center justify-end gap-x-6 bg-gray-50 px-6 py-4 border-t border-gray-200">
+                        <a href="{{ $backRoute }}" class="text-sm font-semibold leading-6 text-gray-900">Kembali</a>
+                        <button type="submit" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                            Simpan Aturan
+                        </button>
+                    </div>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 </x-app-layout>
@@ -1801,9 +1974,15 @@ class Rule extends Model
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Penyakit</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Kode</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Nama Penyakit</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
@@ -1812,7 +1991,17 @@ class Rule extends Model
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $penyakit->kode_penyakit }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $penyakit->nama_penyakit }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <a href="{{ route('admin.rule.edit', $penyakit) }}" class="text-indigo-600 hover:text-indigo-900">Kelola Aturan</a>
+                                            {{-- Kode yang sudah diperbaiki --}}
+                                            @php
+                                                // Cek role user, lalu tentukan nama rute yang benar
+                                                $editRoute =
+                                                    Auth::user()->role == 'admin'
+                                                        ? route('admin.rule.edit', $penyakit->id)
+                                                        : route('dokter.rule.edit', $penyakit->id);
+                                            @endphp
+                                            <a href="{{ $editRoute }}" class="text-indigo-600 hover:text-indigo-900">
+                                                Kelola Aturan
+                                            </a>
                                         </td>
                                     </tr>
                                 @empty
@@ -1835,16 +2024,94 @@ class Rule extends Model
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Admin Dashboard') }}
+            {{ __('Dashboard Admin') }}
         </h2>
     </x-slot>
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    {{ __("Anda login sebagai Admin!") }}
+            <div class="space-y-8">
+
+                <div>
+                    <h3 class="text-base font-semibold leading-6 text-gray-900">Ringkasan Sistem</h3>
+                    <dl class="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
+                        <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+                            <dt class="truncate text-sm font-medium text-gray-500">Total Pengguna</dt>
+                            <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ $stats['pengguna'] }}</dd>
+                        </div>
+                        <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+                            <dt class="truncate text-sm font-medium text-gray-500">Total Dokter</dt>
+                            <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ $stats['dokter'] }}</dd>
+                        </div>
+                        <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+                            <dt class="truncate text-sm font-medium text-gray-500">Total Penyakit</dt>
+                            <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ $stats['penyakit'] }}</dd>
+                        </div>
+                        <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+                            <dt class="truncate text-sm font-medium text-gray-500">Total Gejala</dt>
+                            <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ $stats['gejala'] }}</dd>
+                        </div>
+                        <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+                            <dt class="truncate text-sm font-medium text-gray-500">Total Diagnosa</dt>
+                            <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ $stats['total_diagnosa'] }}</dd>
+                        </div>
+                    </dl>
                 </div>
+
+                <div>
+                    <h3 class="text-base font-semibold leading-6 text-gray-900">Akses Cepat</h3>
+                    <div class="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-3">
+                        <a href="{{ route('admin.gejala.index') }}" class="rounded-lg bg-indigo-600 px-4 py-5 text-white shadow hover:bg-indigo-700 transition">
+                            <p class="font-semibold">Kelola Gejala</p>
+                            <p class="text-sm text-indigo-100 mt-1">Tambah, edit, atau hapus data gejala.</p>
+                        </a>
+                        <a href="{{ route('admin.penyakit.index') }}" class="rounded-lg bg-indigo-600 px-4 py-5 text-white shadow hover:bg-indigo-700 transition">
+                            <p class="font-semibold">Kelola Penyakit</p>
+                            <p class="text-sm text-indigo-100 mt-1">Tambah, edit, atau hapus data penyakit.</p>
+                        </a>
+                        <a href="{{ route('admin.rule.index') }}" class="rounded-lg bg-indigo-600 px-4 py-5 text-white shadow hover:bg-indigo-700 transition">
+                            <p class="font-semibold">Kelola Aturan (Rule Base)</p>
+                            <p class="text-sm text-indigo-100 mt-1">Hubungkan gejala dengan penyakit.</p>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6 md:p-8">
+                        <h3 class="text-xl font-bold text-gray-800">Aktivitas Diagnosa Terakhir</h3>
+                        <div class="mt-6 flow-root">
+                            <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                                <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                                    <table class="min-w-full divide-y divide-gray-300">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">Nama Pasien</th>
+                                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Hasil Diagnosa</th>
+                                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Waktu</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-200">
+                                            @forelse ($aktivitasTerakhir as $aktivitas)
+                                                <tr>
+                                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">{{ $aktivitas->user->name }}</td>
+                                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ $aktivitas->penyakit->nama_penyakit }}</td>
+                                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ $aktivitas->created_at->diffForHumans() }}</td>
+                                                </tr>
+                                            @empty
+                                                <tr>
+                                                    <td colspan="3" class="px-3 py-10 text-center text-sm text-gray-500">
+                                                        Belum ada aktivitas diagnosa yang tercatat.
+                                                    </td>
+                                                </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -2482,7 +2749,7 @@ $classes = ($active ?? false)
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Dokter Dashboard') }}
+            {{ __('Dashboard Dokter') }}
         </h2>
     </x-slot>
 
@@ -2490,11 +2757,58 @@ $classes = ($active ?? false)
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
-                    {{ __("Anda login sebagai Dokter! Anda dapat mengelola data master.") }}
+                    <h3 class="text-lg font-medium mb-4">Statistik Diagnosa Penyakit (12 Bulan Terakhir)</h3>
+                    
+                    {{-- Canvas untuk menampung grafik --}}
+                    <div>
+                        <canvas id="diseaseChart"></canvas>
+                    </div>
+
                 </div>
             </div>
         </div>
     </div>
+
+    {{-- Script untuk Chart.js --}}
+    @push('scripts')
+        {{-- Load library Chart.js dari CDN --}}
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const ctx = document.getElementById('diseaseChart').getContext('2d');
+                
+                // Ambil data yang sudah kita siapkan dari controller
+                const chartData = {!! $chartData !!};
+
+                new Chart(ctx, {
+                    type: 'bar', // Tipe grafik bar
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: 'Jumlah Diagnosa per Bulan'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    // Pastikan sumbu Y hanya menampilkan angka bulat
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+        </script>
+    @endpush
 </x-app-layout>
 
 ===== resources\views\layouts\app.blade.php =====
@@ -2572,6 +2886,7 @@ $classes = ($active ?? false)
             </main>
         </div>
     </div>
+    @stack('scripts')
 </body>
 
 </html>
@@ -2612,15 +2927,21 @@ $classes = ($active ?? false)
 
 ===== resources\views\layouts\navigation.blade.php =====
 <aside class="h-full flex flex-col md:h-screen md:sticky md:top-0">
-    <!-- Logo -->
     <div class="p-6 border-b border-gray-200">
-        <a href="{{ route('dashboard') }}" class="text-2xl font-bold text-gray-800">
-            {{ config('app.name', 'MY APP') }}
+        <a href="{{ route('dashboard') }}" class="block transition-transform duration-200 hover:scale-105">
+            <div>
+                <p class="text-base font-bold text-gray-800 leading-tight">
+                    Sistem Pakar Penyakit Tulang
+                </p>
+                <p class="text-xs font-semibold text-indigo-600 uppercase tracking-wider">
+                    SPPT
+                </p>
+            </div>
         </a>
     </div>
     <!-- Nav Links -->
     <nav class="flex-1 px-4 py-6 space-y-2">
-        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard', 'admin.dashboard', 'dokter.dashboard')">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                 stroke="currentColor" class="size-4">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -2629,54 +2950,42 @@ $classes = ($active ?? false)
 
             {{ __('Dashboard') }}
         </x-nav-link>
+
+        {{-- Tampilkan menu ini jika rolenya 'admin' ATAU 'dokter' --}}
+        @if (in_array(Auth::user()->role, ['admin', 'dokter']))
+
+            {{-- HANYA ADMIN YANG BISA MELIHAT INI --}}
+            @if (Auth::user()->role == 'admin')
+                <x-nav-link :href="route('admin.gejala.index')" :active="request()->routeIs('admin.gejala.*')">
+                    {{ __('Gejala') }}
+                </x-nav-link>
+                <x-nav-link :href="route('admin.penyakit.index')" :active="request()->routeIs('admin.penyakit.*')">
+                    {{ __('Penyakit') }}
+                </x-nav-link>
+            @endif
+
+            {{-- ADMIN DAN DOKTER BISA MELIHAT INI --}}
+            {{-- Kita sesuaikan route-nya agar dinamis berdasarkan role --}}
+            @php
+                $ruleRoute = Auth::user()->role == 'admin' ? route('admin.rule.index') : route('dokter.rule.index');
+                $isRuleActive = request()->routeIs('admin.rule.*') || request()->routeIs('dokter.rule.*');
+            @endphp
+            <x-nav-link :href="$ruleRoute" :active="$isRuleActive">
+                {{ __('Rule Base') }}
+            </x-nav-link>
+
+        @endif
         {{-- Navigasi Khusus Pengguna Biasa --}}
-        @if(Auth::user()->role == 'pengguna')
+
+        @if (Auth::user()->role == 'pengguna')
+            <x-nav-link :href="route('diagnosa.index')" :active="request()->routeIs('diagnosa.index')">
+                {{ __('Mulai Diagnosa') }}
+            </x-nav-link>
             <x-nav-link :href="route('diagnosa.riwayat')" :active="request()->routeIs('diagnosa.riwayat')">
-                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
                 {{ __('Riwayat Diagnosa') }}
             </x-nav-link>
         @endif
-        {{-- Tambahkan Navigasi Khusus Admin di sini --}}
-        @if(in_array(Auth::user()->role, ['admin', 'dokter']))
-            <div class="mt-4 pt-4 border-t border-gray-200">
-                <p class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Master Data</p>
-                <div class="mt-2 space-y-2">
-                    <x-nav-link :href="route('admin.gejala.index')" :active="request()->routeIs('admin.gejala.*')">
-                        {{-- Icon bisa diganti dengan SVG lain jika mau --}}
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                        </svg>
-                        {{ __('Gejala') }}
-                    </x-nav-link>
-                    {{-- Link Penyakit --}}
-                    <x-nav-link :href="route('admin.penyakit.index')" :active="request()->routeIs('admin.penyakit.*')">
-                        {{-- Icon Penyakit --}}
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v4.512a2 2 0 01-1 1.732l-2 1.155a2 2 0 01-2 0l-2-1.155A2 2 0 015 9.512V5L4 4" />
-                        </svg>
-                        {{ __('Penyakit') }}
-                    </x-nav-link>
 
-                    {{-- Link Rule Base --}}
-                    <x-nav-link :href="route('admin.rule.index')" :active="request()->routeIs('admin.rule.*')">
-                        {{-- Icon Rule Base --}}
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                        </svg>
-                        {{ __('Rule Base') }}
-                    </x-nav-link>
-                    {{-- Nanti link untuk Penyakit dan Rule bisa ditambahkan di sini --}}
-                </div>
-            </div>
-        @endif
     </nav>
     <!-- User Dropdown -->
     <div x-data="{ open: false }" class="px-4 py-4 border-t border-gray-200">
@@ -3051,18 +3360,62 @@ $classes = ($active ?? false)
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    <h3 class="text-lg font-medium">Selamat Datang, {{ Auth::user()->name }}!</h3>
-                    <p class="mt-1 text-gray-600">
-                        Gunakan sistem ini untuk melakukan diagnosa awal terkait keluhan penyakit tulang yang Anda rasakan.
-                    </p>
-                    <div class="mt-6">
-                        <a href="{{ route('diagnosa.index') }}" class="inline-flex items-center px-6 py-3 bg-indigo-600 border border-transparent rounded-md font-semibold text-white uppercase tracking-widest hover:bg-indigo-700">
-                            Mulai Diagnosa Sekarang
+            <div class="space-y-8">
+
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6 md:p-8 text-gray-900 flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-800">Selamat Datang, {{ Auth::user()->name }}!</h3>
+                            <p class="mt-2 text-gray-600">Siap untuk memeriksa kesehatan tulang Anda? Klik tombol di samping untuk memulai diagnosa berdasarkan gejala yang Anda rasakan.</p>
+                        </div>
+                        <a href="{{ route('diagnosa.index') }}" class="w-full md:w-auto flex-shrink-0 rounded-md bg-indigo-600 px-6 py-3 text-sm font-semibold text-white text-center shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-all duration-150">
+                            Mulai Diagnosa Baru
                         </a>
                     </div>
                 </div>
+
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6 md:p-8">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-xl font-bold text-gray-800">Riwayat Diagnosa Terakhir</h3>
+                            <a href="{{ route('diagnosa.riwayat') }}" class="text-sm font-semibold text-indigo-600 hover:text-indigo-500">Lihat Semua &rarr;</a>
+                        </div>
+                        
+                        <div class="mt-6 border-t border-gray-200">
+                            @forelse ($riwayatTerakhir as $riwayat)
+                                <div class="py-4 flex items-center justify-between border-b border-gray-100">
+                                    <div>
+                                        <p class="font-semibold text-gray-800">{{ $riwayat->penyakit->nama_penyakit }}</p>
+                                        <p class="text-sm text-gray-500">{{ $riwayat->created_at->format('d F Y, H:i') }}</p>
+                                    </div>
+                                    <a href="{{ route('diagnosa.hasil', $riwayat->id) }}" class="text-sm font-semibold text-indigo-600 hover:text-indigo-500">
+                                        Lihat Detail
+                                    </a>
+                                </div>
+                            @empty
+                                <div class="py-10 text-center">
+                                    <p class="text-gray-500">Anda belum memiliki riwayat diagnosa.</p>
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-indigo-50 border-l-4 border-indigo-400 p-6 rounded-lg">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-indigo-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-indigo-700">
+                                Hasil diagnosa dari sistem ini adalah prediksi awal dan <strong class="font-semibold">tidak menggantikan konsultasi medis profesional</strong>. Untuk kepastian, silakan hubungi <a href="{{ route('kontak') }}" class="font-semibold underline">dokter atau klinik kami</a>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
             </div>
         </div>
     </div>

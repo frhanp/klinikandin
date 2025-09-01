@@ -1,13 +1,24 @@
 <aside class="h-full flex flex-col md:h-screen md:sticky md:top-0">
     <div class="p-6 border-b border-gray-200">
-        <a href="{{ route('dashboard') }}" class="block transition-transform duration-200 hover:scale-105">
-            <div>
-                <p class="text-base font-bold text-gray-800 leading-tight">
-                    Sistem Pakar Penyakit Tulang
-                </p>
-                <p class="text-xs font-semibold text-indigo-600 uppercase tracking-wider">
-                    SPPT
-                </p>
+        <a href="{{ route('dashboard') }}" class="block">
+            <div class="flex items-center gap-x-3">
+                {{-- Ikon Baru --}}
+                <div class="flex-shrink-0">
+                    <div class="flex items-center justify-center h-12 w-12 rounded-full bg-indigo-600 text-white">
+                        {{-- Ganti dengan SVG logo Anda jika ada, atau gunakan inisial --}}
+                        <span class="text-lg font-bold">S</span>
+                    </div>
+                </div>
+    
+                {{-- Teks Logo --}}
+                <div>
+                    <p class="text-base font-bold text-gray-800 leading-tight">
+                        Sistem Pakar
+                    </p>
+                    <p class="text-sm font-medium text-indigo-600">
+                        Penyakit Tulang
+                    </p>
+                </div>
             </div>
         </a>
     </div>
@@ -33,6 +44,9 @@
                 </x-nav-link>
                 <x-nav-link :href="route('admin.penyakit.index')" :active="request()->routeIs('admin.penyakit.*')">
                     {{ __('Penyakit') }}
+                </x-nav-link>
+                <x-nav-link :href="route('admin.dokter.index')" :active="request()->routeIs('admin.dokter.*')">
+                    {{ __('Dokter') }}
                 </x-nav-link>
             @endif
 
