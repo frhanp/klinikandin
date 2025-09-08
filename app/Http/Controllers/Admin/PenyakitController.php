@@ -35,7 +35,8 @@ class PenyakitController extends Controller
             'kode_penyakit' => 'required|string|unique:penyakits,kode_penyakit|max:10',
             'nama_penyakit' => 'required|string|max:255',
             'deskripsi' => 'required|string',
-            'solusi' => 'required|string',
+            'pencegahan' => 'required|string',
+            'pengobatan' => 'required|string',
         ]);
 
         Penyakit::create($request->all());
@@ -61,7 +62,9 @@ class PenyakitController extends Controller
             'kode_penyakit' => 'required|string|max:10|unique:penyakits,kode_penyakit,' . $penyakit->id,
             'nama_penyakit' => 'required|string|max:255',
             'deskripsi' => 'required|string',
-            'solusi' => 'required|string',
+            'pencegahan' => 'required|string',
+            'pengobatan' => 'required|string',
+
         ]);
 
         $penyakit->update($request->all());

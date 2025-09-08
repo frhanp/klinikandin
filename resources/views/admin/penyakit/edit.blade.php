@@ -23,8 +23,12 @@
                             <textarea name="deskripsi" id="deskripsi" rows="4" class="block mt-1 w-full rounded-md shadow-sm border-gray-300">{{ old('deskripsi', $penyakit->deskripsi) }}</textarea>
                         </div>
                         <div class="mb-4">
-                            <label for="solusi" class="block font-medium text-sm text-gray-700">Solusi</label>
-                            <textarea name="solusi" id="solusi" rows="4" class="block mt-1 w-full rounded-md shadow-sm border-gray-300">{{ old('solusi', $penyakit->solusi) }}</textarea>
+                            <label for="pencegahan" class="block font-medium text-sm text-gray-700">Saran Pencegahan</label>
+                            <textarea name="pencegahan" id="pencegahan" rows="4" class="block mt-1 w-full rounded-md shadow-sm border-gray-300">{{ old('pencegahan', $penyakit->pencegahan) }}</textarea>
+                        </div>
+                        <div class="mb-4">
+                            <label for="pengobatan" class="block font-medium text-sm text-gray-700">Saran Pengobatan</label>
+                            <textarea name="pengobatan" id="pengobatan" rows="4" class="block mt-1 w-full rounded-md shadow-sm border-gray-300">{{ old('pengobatan', $penyakit->pengobatan) }}</textarea>
                         </div>
                         <div class="flex items-center justify-end mt-4">
                             <a href="{{ route($rolePrefix . '.penyakit.index') }}" class="text-sm text-gray-600 hover:text-gray-900 mr-4">Batal</a>

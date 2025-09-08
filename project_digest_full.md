@@ -1,5 +1,5 @@
 ﻿# Project Digest (Full Content)
-_Generated: 2025-09-01 21:39:40_
+_Generated: 2025-09-01 23:11:34_
 **Root:** D:\Laragon\www\klinikandin
 
 
@@ -53,7 +53,6 @@ app\Http\Controllers\Admin\DashboardController.php
 app\Http\Controllers\Admin\DokterController.php
 app\Http\Controllers\Admin\GejalaController.php
 app\Http\Controllers\Admin\PenyakitController.php
-app\Http\Controllers\Admin\RuleController.php
 app\Http\Controllers\Auth\AuthenticatedSessionController.php
 app\Http\Controllers\Auth\ConfirmablePasswordController.php
 app\Http\Controllers\Auth\EmailVerificationNotificationController.php
@@ -64,6 +63,7 @@ app\Http\Controllers\Auth\PasswordResetLinkController.php
 app\Http\Controllers\Auth\RegisteredUserController.php
 app\Http\Controllers\Auth\VerifyEmailController.php
 app\Http\Controllers\Dokter\DashboardController.php
+app\Http\Controllers\Dokter\RuleController.php
 app\Http\Controllers\User\DashboardController.php
 app\Http\Middleware\RoleMiddleware.php
 app\Http\Requests\Auth
@@ -251,6 +251,7 @@ storage\framework\views\e615734ff224bd6746f813186ff82847.php
 storage\framework\views\e7c6c7338ee93927d43275d7ee0c205d.php
 storage\framework\views\eab2bde707ddda25261fc26f4d67e94b.php
 storage\framework\views\eaf1d1951717d4e087315bf14074a6b2.php
+storage\framework\views\ec049cf57236412217a259578ad53bdc.php
 storage\framework\views\f1226efc7c251018e20c86e57c18556b.php
 storage\framework\views\f17bbd03d6eea5ed29cdea754e495e92.php
 storage\framework\views\f98d59d2e50ba6f42a3a10ea756d6312.php
@@ -280,11 +281,11 @@ Branch:
 main
 
 Last 5 commits:
+c89696d ubah hak akses kedua kalinya
 0d5a617 add dokter dan revisian lainnya
 26cb2dc susun hak akses dan dashboard dokter
 9690027 perbaiki tampilan diagnosa
 65ed27c tambah kontak pada landing
-e500c46 fix landing
 ```
 
 
@@ -386,18 +387,25 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DiagnosaController;
 
-// Controller Admin
-use App\Http\Controllers\Admin\DokterController;
-use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
-
-// Controller Dokter
+// ==========================================================
+// ===== REVISI PADA PEMANGGILAN CONTROLLER DI SINI =====
+// ==========================================================
+// Controller yang diakses Admin & Dokter
 use App\Http\Controllers\Admin\GejalaController;
 use App\Http\Controllers\Admin\PenyakitController;
-use App\Http\Controllers\Admin\RuleController;
-use App\Http\Controllers\Dokter\DashboardController as DokterDashboardController;
 
-// Controller Pengguna
+// Controller khusus Admin
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\DokterController;
+
+// Controller khusus Dokter
+use App\Http\Controllers\Dokter\DashboardController as DokterDashboardController;
+use App\Http\Controllers\Dokter\RuleController;
+
+// Controller khusus Pengguna
 use App\Http\Controllers\User\DashboardController as UserDashboardController;
+// ==========================================================
+
 
 /*
 |--------------------------------------------------------------------------
@@ -409,7 +417,7 @@ use App\Http\Controllers\User\DashboardController as UserDashboardController;
 Route::get('/', fn() => view('welcome'))->name('home');
 Route::get('/kontak', [HomeController::class, 'kontak'])->name('kontak');
 
-// Grup untuk semua pengguna yang sudah login
+// Grup untuk semua pengguna yang sudah otentikasi
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', function () {
         $user = Auth::user();
@@ -423,19 +431,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// ==========================================================
-// ===== RUTE KHUSUS UNTUK ADMIN (Manajemen Pengguna) =====
-// ==========================================================
-Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+
+// RUTE KHUSUS UNTUK ADMIN
+Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', AdminDashboardController::class)->name('dashboard');
+    Route::resource('gejala', GejalaController::class)->except(['show']);
+    Route::resource('penyakit', PenyakitController::class)->except(['show']);
     Route::resource('dokter', DokterController::class)->except(['show']);
-    // Tambahkan CRUD Pengguna di sini jika diperlukan nanti
 });
 
-// ==========================================================
-// ===== RUTE KHUSUS UNTUK DOKTER (Manajemen Medis) =====
-// ==========================================================
-Route::middleware(['auth', 'role:dokter'])->prefix('dokter')->name('dokter.')->group(function () {
+
+// RUTE KHUSUS UNTUK DOKTER
+Route::middleware(['auth', 'verified', 'role:dokter'])->prefix('dokter')->name('dokter.')->group(function () {
     Route::get('/dashboard', [DokterDashboardController::class, 'index'])->name('dashboard');
     Route::resource('gejala', GejalaController::class)->except(['show']);
     Route::resource('penyakit', PenyakitController::class)->except(['show']);
@@ -444,10 +451,9 @@ Route::middleware(['auth', 'role:dokter'])->prefix('dokter')->name('dokter.')->g
     Route::put('rule/{penyakit}', [RuleController::class, 'update'])->name('rule.update');
 });
 
-// ==========================================================
-// ===== RUTE KHUSUS UNTUK PENGGUNA (Diagnosa) =====
-// ==========================================================
-Route::middleware(['auth', 'role:pengguna'])->prefix('diagnosa')->name('diagnosa.')->group(function () {
+
+// RUTE KHUSUS UNTUK PENGGUNA
+Route::middleware(['auth', 'verified', 'role:pengguna'])->prefix('diagnosa')->name('diagnosa.')->group(function () {
     Route::get('/', [DiagnosaController::class, 'index'])->name('index');
     Route::post('/', [DiagnosaController::class, 'process'])->name('process');
     Route::get('/hasil/{diagnosaHistory}', [DiagnosaController::class, 'hasil'])->name('hasil');
@@ -476,6 +482,18 @@ require __DIR__ . '/auth.php';
   PUT|PATCH       admin/dokter/{dokter} ................................................ admin.dokter.update ΓÇ║ Admin\DokterController@update
   DELETE          admin/dokter/{dokter} .............................................. admin.dokter.destroy ΓÇ║ Admin\DokterController@destroy
   GET|HEAD        admin/dokter/{dokter}/edit ............................................... admin.dokter.edit ΓÇ║ Admin\DokterController@edit
+  GET|HEAD        admin/gejala ........................................................... admin.gejala.index ΓÇ║ Admin\GejalaController@index
+  POST            admin/gejala ........................................................... admin.gejala.store ΓÇ║ Admin\GejalaController@store
+  GET|HEAD        admin/gejala/create .................................................. admin.gejala.create ΓÇ║ Admin\GejalaController@create
+  PUT|PATCH       admin/gejala/{gejala} ................................................ admin.gejala.update ΓÇ║ Admin\GejalaController@update
+  DELETE          admin/gejala/{gejala} .............................................. admin.gejala.destroy ΓÇ║ Admin\GejalaController@destroy
+  GET|HEAD        admin/gejala/{gejala}/edit ............................................... admin.gejala.edit ΓÇ║ Admin\GejalaController@edit
+  GET|HEAD        admin/penyakit ..................................................... admin.penyakit.index ΓÇ║ Admin\PenyakitController@index
+  POST            admin/penyakit ..................................................... admin.penyakit.store ΓÇ║ Admin\PenyakitController@store
+  GET|HEAD        admin/penyakit/create ............................................ admin.penyakit.create ΓÇ║ Admin\PenyakitController@create
+  PUT|PATCH       admin/penyakit/{penyakit} ........................................ admin.penyakit.update ΓÇ║ Admin\PenyakitController@update
+  DELETE          admin/penyakit/{penyakit} ...................................... admin.penyakit.destroy ΓÇ║ Admin\PenyakitController@destroy
+  GET|HEAD        admin/penyakit/{penyakit}/edit ....................................... admin.penyakit.edit ΓÇ║ Admin\PenyakitController@edit
   GET|HEAD        confirm-password .............................................. password.confirm ΓÇ║ Auth\ConfirmablePasswordController@show
   POST            confirm-password ................................................................ Auth\ConfirmablePasswordController@store
   GET|HEAD        dashboard ...................................................................................................... dashboard
@@ -496,9 +514,9 @@ require __DIR__ . '/auth.php';
   PUT|PATCH       dokter/penyakit/{penyakit} ...................................... dokter.penyakit.update ΓÇ║ Admin\PenyakitController@update
   DELETE          dokter/penyakit/{penyakit} .................................... dokter.penyakit.destroy ΓÇ║ Admin\PenyakitController@destroy
   GET|HEAD        dokter/penyakit/{penyakit}/edit ..................................... dokter.penyakit.edit ΓÇ║ Admin\PenyakitController@edit
-  GET|HEAD        dokter/rule ............................................................... dokter.rule.index ΓÇ║ Admin\RuleController@index
-  PUT             dokter/rule/{penyakit} .................................................. dokter.rule.update ΓÇ║ Admin\RuleController@update
-  GET|HEAD        dokter/rule/{penyakit}/edit ................................................. dokter.rule.edit ΓÇ║ Admin\RuleController@edit
+  GET|HEAD        dokter/rule .............................................................. dokter.rule.index ΓÇ║ Dokter\RuleController@index
+  PUT             dokter/rule/{penyakit} ................................................. dokter.rule.update ΓÇ║ Dokter\RuleController@update
+  GET|HEAD        dokter/rule/{penyakit}/edit ................................................ dokter.rule.edit ΓÇ║ Dokter\RuleController@edit
   POST            email/verification-notification ................... verification.send ΓÇ║ Auth\EmailVerificationNotificationController@store
   GET|HEAD        forgot-password ............................................... password.request ΓÇ║ Auth\PasswordResetLinkController@create
   POST            forgot-password .................................................. password.email ΓÇ║ Auth\PasswordResetLinkController@store
@@ -519,7 +537,7 @@ require __DIR__ . '/auth.php';
   GET|HEAD        verify-email ................................................ verification.notice ΓÇ║ Auth\EmailVerificationPromptController
   GET|HEAD        verify-email/{id}/{hash} ................................................ verification.verify ΓÇ║ Auth\VerifyEmailController
 
-                                                                                                                         Showing [56] routes
+                                                                                                                         Showing [68] routes
 
 ```
 
@@ -665,7 +683,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Gejala;
-
+use Illuminate\Support\Facades\Auth;
 class GejalaController extends Controller
 {
     /**
@@ -697,8 +715,8 @@ class GejalaController extends Controller
 
         Gejala::create($request->all());
 
-        return redirect()->route('admin.gejala.index')
-            ->with('success', 'Data Gejala berhasil ditambahkan.');
+        $rolePrefix = Auth::user()->role;
+        return redirect()->route($rolePrefix . '.gejala.index')->with('success', 'Data gejala berhasil ditambahkan.');;
     }
 
     /**
@@ -721,8 +739,8 @@ class GejalaController extends Controller
 
         $gejala->update($request->all());
 
-        return redirect()->route('admin.gejala.index')
-            ->with('success', 'Data Gejala berhasil diperbarui.');
+        $rolePrefix = Auth::user()->role;
+        return redirect()->route($rolePrefix . '.gejala.index')->with('success', 'Data gejala berhasil diperbarui.');
     }
 
     /**
@@ -732,8 +750,8 @@ class GejalaController extends Controller
     {
         $gejala->delete();
 
-        return redirect()->route('admin.gejala.index')
-            ->with('success', 'Data Gejala berhasil dihapus.');
+        $rolePrefix = Auth::user()->role;
+        return redirect()->route($rolePrefix . '.gejala.index')->with('success', 'Data gejala berhasil dihapus.');
     }
 }
 
@@ -745,6 +763,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Penyakit;
+use Illuminate\Support\Facades\Auth;
 
 class PenyakitController extends Controller
 {
@@ -779,8 +798,8 @@ class PenyakitController extends Controller
 
         Penyakit::create($request->all());
 
-        return redirect()->route('admin.penyakit.index')
-            ->with('success', 'Data Penyakit berhasil ditambahkan.');
+        $rolePrefix = Auth::user()->role;
+        return redirect()->route($rolePrefix . '.penyakit.index')->with('success', 'Data penyakit berhasil ditambahkan.');
     }
 
     /**
@@ -805,8 +824,8 @@ class PenyakitController extends Controller
 
         $penyakit->update($request->all());
 
-        return redirect()->route('admin.penyakit.index')
-            ->with('success', 'Data Penyakit berhasil diperbarui.');
+        $rolePrefix = Auth::user()->role;
+        return redirect()->route($rolePrefix . '.penyakit.index')->with('success', 'Data penyakit berhasil diperbarui.');
     }
 
     /**
@@ -816,70 +835,8 @@ class PenyakitController extends Controller
     {
         $penyakit->delete();
 
-        return redirect()->route('admin.penyakit.index')
-            ->with('success', 'Data Penyakit berhasil dihapus.');
-    }
-}
-
-===== app\Http\Controllers\Admin\RuleController.php =====
-<?php
-
-namespace App\Http\Controllers\Admin;
-
-use App\Http\Controllers\Controller;
-use App\Models\Penyakit;
-use App\Models\Gejala;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-
-class RuleController extends Controller
-{
-    /**
-     * Menampilkan daftar penyakit untuk dipilih.
-     */
-    public function index()
-    {
-        $penyakits = Penyakit::orderBy('kode_penyakit')->get();
-        return view('admin.rule.index', compact('penyakits'));
-    }
-
-    /**
-     * Menampilkan form untuk mengedit rule berdasarkan penyakit yang dipilih.
-     */
-    public function edit(Penyakit $penyakit)
-    {
-        $gejalas = Gejala::all();
-
-        // =================================================================
-        // ===== INI BAGIAN YANG HILANG DAN SEKARANG SUDAH DIPERBAIKI =====
-        // Mengambil semua ID gejala yang sudah berelasi dengan penyakit ini
-        $penyakitGejalaIds = $penyakit->gejalas->pluck('id')->toArray();
-        // =================================================================
-
-        return view('admin.rule.edit', compact('penyakit', 'gejalas', 'penyakitGejalaIds'));
-    }
-
-    /**
-     * Mengupdate rule untuk penyakit yang dipilih.
-     */
-    public function update(Request $request, Penyakit $penyakit)
-    {
-        $request->validate([
-            'gejala_ids' => 'nullable|array',
-            'gejala_ids.*' => 'exists:gejalas,id',
-        ]);
-
-        // Gunakan sync() untuk sinkronisasi relasi
-        // Method ini akan otomatis menambah/menghapus relasi di tabel pivot 'rules'
-        $penyakit->gejalas()->sync($request->gejala_ids);
-
-        // =================================================================
-        // ===== INI BAGIAN YANG DIPERBAIKI =====
-        // Tentukan rute kembali berdasarkan peran pengguna yang sedang login
-        $returnRoute = Auth::user()->role == 'admin' ? 'admin.rule.index' : 'dokter.rule.index';
-        // =================================================================
-
-        return redirect()->route($returnRoute)->with('success', 'Rule base berhasil diperbarui.');
+        $rolePrefix = Auth::user()->role;
+        return redirect()->route($rolePrefix . '.penyakit.index')->with('success', 'Data penyakit berhasil dihapus.');
     }
 }
 
@@ -1300,6 +1257,68 @@ class DashboardController extends Controller
         $chartData = json_encode(['labels' => $labels, 'datasets' => $datasets]);
 
         return view('dokter.dashboard', compact('chartData'));
+    }
+}
+
+===== app\Http\Controllers\Dokter\RuleController.php =====
+<?php
+
+namespace App\Http\Controllers\Dokter;
+
+use App\Http\Controllers\Controller;
+use App\Models\Penyakit;
+use App\Models\Gejala;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class RuleController extends Controller
+{
+    /**
+     * Menampilkan daftar penyakit untuk dipilih.
+     */
+    public function index()
+    {
+        $penyakits = Penyakit::orderBy('kode_penyakit')->get();
+        return view('admin.rule.index', compact('penyakits'));
+    }
+
+    /**
+     * Menampilkan form untuk mengedit rule berdasarkan penyakit yang dipilih.
+     */
+    public function edit(Penyakit $penyakit)
+    {
+        $gejalas = Gejala::all();
+
+        // =================================================================
+        // ===== INI BAGIAN YANG HILANG DAN SEKARANG SUDAH DIPERBAIKI =====
+        // Mengambil semua ID gejala yang sudah berelasi dengan penyakit ini
+        $penyakitGejalaIds = $penyakit->gejalas->pluck('id')->toArray();
+        // =================================================================
+
+        return view('admin.rule.edit', compact('penyakit', 'gejalas', 'penyakitGejalaIds'));
+    }
+
+    /**
+     * Mengupdate rule untuk penyakit yang dipilih.
+     */
+    public function update(Request $request, Penyakit $penyakit)
+    {
+        $request->validate([
+            'gejala_ids' => 'nullable|array',
+            'gejala_ids.*' => 'exists:gejalas,id',
+        ]);
+
+        // Gunakan sync() untuk sinkronisasi relasi
+        // Method ini akan otomatis menambah/menghapus relasi di tabel pivot 'rules'
+        $penyakit->gejalas()->sync($request->gejala_ids);
+
+        // =================================================================
+        // ===== INI BAGIAN YANG DIPERBAIKI =====
+        // Tentukan rute kembali berdasarkan peran pengguna yang sedang login
+        $returnRoute = Auth::user()->role == 'admin' ? 'admin.rule.index' : 'dokter.rule.index';
+        // =================================================================
+
+        return redirect()->route($returnRoute)->with('success', 'Rule base berhasil diperbarui.');
     }
 }
 
@@ -1819,29 +1838,26 @@ class Rule extends Model
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
-                    <form action="{{ route('admin.gejala.store') }}" method="POST">
+                    @php $rolePrefix = Auth::user()->role; @endphp
+                    <form action="{{ route($rolePrefix . '.gejala.store') }}" method="POST">
                         @csrf
-                        <div class="space-y-6">
-                            {{-- Kode Gejala --}}
-                            <div>
-                                <x-input-label for="kode_gejala" :value="__('Kode Gejala (Contoh: G01)')" />
-                                <x-text-input id="kode_gejala" name="kode_gejala" type="text" class="mt-1 block w-full" :value="old('kode_gejala')" required autofocus />
-                                <x-input-error class="mt-2" :messages="$errors->get('kode_gejala')" />
-                            </div>
-
-                            {{-- Nama Gejala --}}
-                            <div>
-                                <x-input-label for="nama_gejala" :value="__('Nama Gejala')" />
-                                <x-text-input id="nama_gejala" name="nama_gejala" type="text" class="mt-1 block w-full" :value="old('nama_gejala')" required />
-                                <x-input-error class="mt-2" :messages="$errors->get('nama_gejala')" />
-                            </div>
-
-                            <div class="flex items-center gap-4">
-                                <x-primary-button>{{ __('Simpan') }}</x-primary-button>
-                                <a href="{{ route('admin.gejala.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
-                                    {{ __('Batal') }}
-                                </a>
-                            </div>
+                        <div class="mb-4">
+                            <label for="kode_gejala" class="block font-medium text-sm text-gray-700">Kode Gejala</label>
+                            <input type="text" name="kode_gejala" id="kode_gejala" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" value="{{ old('kode_gejala') }}" required>
+                            @error('kode_gejala')
+                                <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div class="mb-4">
+                            <label for="nama_gejala" class="block font-medium text-sm text-gray-700">Nama Gejala</label>
+                            <input type="text" name="nama_gejala" id="nama_gejala" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" value="{{ old('nama_gejala') }}" required>
+                             @error('nama_gejala')
+                                <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div class="flex items-center justify-end mt-4">
+                            <a href="{{ route($rolePrefix . '.gejala.index') }}" class="text-sm text-gray-600 hover:text-gray-900 mr-4">Batal</a>
+                            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Simpan</button>
                         </div>
                     </form>
                 </div>
@@ -1862,30 +1878,33 @@ class Rule extends Model
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
-                    <form action="{{ route('admin.gejala.update', $gejala) }}" method="POST">
+                    @php $rolePrefix = Auth::user()->role; @endphp
+                    <form action="{{ route($rolePrefix . '.gejala.update', $gejala) }}" method="POST">
                         @csrf
                         @method('PUT')
-                        <div class="space-y-6">
-                            {{-- Kode Gejala --}}
-                            <div>
-                                <x-input-label for="kode_gejala" :value="__('Kode Gejala (Contoh: G01)')" />
-                                <x-text-input id="kode_gejala" name="kode_gejala" type="text" class="mt-1 block w-full" :value="old('kode_gejala', $gejala->kode_gejala)" required autofocus />
-                                <x-input-error class="mt-2" :messages="$errors->get('kode_gejala')" />
-                            </div>
-
-                            {{-- Nama Gejala --}}
-                            <div>
-                                <x-input-label for="nama_gejala" :value="__('Nama Gejala')" />
-                                <x-text-input id="nama_gejala" name="nama_gejala" type="text" class="mt-1 block w-full" :value="old('nama_gejala', $gejala->nama_gejala)" required />
-                                <x-input-error class="mt-2" :messages="$errors->get('nama_gejala')" />
-                            </div>
-
-                            <div class="flex items-center gap-4">
-                                <x-primary-button>{{ __('Update') }}</x-primary-button>
-                                 <a href="{{ route('admin.gejala.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
-                                    {{ __('Batal') }}
-                                </a>
-                            </div>
+                        <div class="mb-4">
+                            <label for="kode_gejala" class="block font-medium text-sm text-gray-700">Kode Gejala</label>
+                            <input type="text" name="kode_gejala" id="kode_gejala"
+                                class="block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                value="{{ old('kode_gejala', $gejala->kode_gejala) }}" required>
+                            @error('kode_gejala')
+                                <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div class="mb-4">
+                            <label for="nama_gejala" class="block font-medium text-sm text-gray-700">Nama Gejala</label>
+                            <input type="text" name="nama_gejala" id="nama_gejala"
+                                class="block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                value="{{ old('nama_gejala', $gejala->nama_gejala) }}" required>
+                            @error('nama_gejala')
+                                <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div class="flex items-center justify-end mt-4">
+                            <a href="{{ route($rolePrefix . '.gejala.index') }}"
+                                class="text-sm text-gray-600 hover:text-gray-900 mr-4">Batal</a>
+                            <button type="submit"
+                                class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Update</button>
                         </div>
                     </form>
                 </div>
@@ -1907,9 +1926,17 @@ class Rule extends Model
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
 
-                    {{-- Tombol Tambah Gejala --}}
+                    {{-- ========================================================== --}}
+                    {{-- ===== REVISI DIMULAI DI SINI ===== --}}
+                    {{-- ========================================================== --}}
+                    @php
+                        // Menentukan prefix route ('admin' atau 'dokter') berdasarkan peran pengguna
+                        $rolePrefix = Auth::user()->role;
+                    @endphp
+
+                    {{-- Tombol Tambah Gejala (Link sudah dinamis) --}}
                     <div class="mb-4">
-                        <a href="{{ route('admin.gejala.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 active:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                        <a href="{{ route($rolePrefix . '.gejala.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 active:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                             Tambah Gejala
                         </a>
                     </div>
@@ -1939,8 +1966,9 @@ class Rule extends Model
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $gejala->kode_gejala }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $gejala->nama_gejala }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <a href="{{ route('admin.gejala.edit', $gejala) }}" class="text-indigo-600 hover:text-indigo-900 mr-4">Edit</a>
-                                            <form action="{{ route('admin.gejala.destroy', $gejala) }}" method="POST" class="inline-block" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?');">
+                                            {{-- Link Edit & Form Hapus (sudah dinamis) --}}
+                                            <a href="{{ route($rolePrefix . '.gejala.edit', $gejala) }}" class="text-indigo-600 hover:text-indigo-900 mr-4">Edit</a>
+                                            <form action="{{ route($rolePrefix . '.gejala.destroy', $gejala) }}" method="POST" class="inline-block" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?');">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="text-red-600 hover:text-red-900">Hapus</button>
@@ -1972,44 +2000,34 @@ class Rule extends Model
 ===== resources\views\admin\penyakit\create.blade.php =====
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Tambah Penyakit Baru') }}
-        </h2>
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Tambah Penyakit Baru') }}</h2>
     </x-slot>
-
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
-                    <form action="{{ route('admin.penyakit.store') }}" method="POST">
+                    @php $rolePrefix = Auth::user()->role; @endphp
+                    <form action="{{ route($rolePrefix . '.penyakit.store') }}" method="POST">
                         @csrf
-                        <div class="space-y-6">
-                            <div>
-                                <x-input-label for="kode_penyakit" :value="__('Kode Penyakit (Contoh: P01)')" />
-                                <x-text-input id="kode_penyakit" name="kode_penyakit" type="text" class="mt-1 block w-full" :value="old('kode_penyakit')" required autofocus />
-                                <x-input-error class="mt-2" :messages="$errors->get('kode_penyakit')" />
-                            </div>
-                            <div>
-                                <x-input-label for="nama_penyakit" :value="__('Nama Penyakit')" />
-                                <x-text-input id="nama_penyakit" name="nama_penyakit" type="text" class="mt-1 block w-full" :value="old('nama_penyakit')" required />
-                                <x-input-error class="mt-2" :messages="$errors->get('nama_penyakit')" />
-                            </div>
-                            <div>
-                                <x-input-label for="deskripsi" :value="__('Deskripsi Penyakit')" />
-                                <textarea id="deskripsi" name="deskripsi" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm mt-1 block w-full" rows="4">{{ old('deskripsi') }}</textarea>
-                                <x-input-error class="mt-2" :messages="$errors->get('deskripsi')" />
-                            </div>
-                            <div>
-                                <x-input-label for="solusi" :value="__('Solusi Penyakit')" />
-                                <textarea id="solusi" name="solusi" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm mt-1 block w-full" rows="4">{{ old('solusi') }}</textarea>
-                                <x-input-error class="mt-2" :messages="$errors->get('solusi')" />
-                            </div>
-                            <div class="flex items-center gap-4">
-                                <x-primary-button>{{ __('Simpan') }}</x-primary-button>
-                                <a href="{{ route('admin.penyakit.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50">
-                                    {{ __('Batal') }}
-                                </a>
-                            </div>
+                        <div class="mb-4">
+                            <label for="kode_penyakit" class="block font-medium text-sm text-gray-700">Kode Penyakit</label>
+                            <input type="text" name="kode_penyakit" id="kode_penyakit" class="block mt-1 w-full rounded-md shadow-sm border-gray-300" value="{{ old('kode_penyakit') }}" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="nama_penyakit" class="block font-medium text-sm text-gray-700">Nama Penyakit</label>
+                            <input type="text" name="nama_penyakit" id="nama_penyakit" class="block mt-1 w-full rounded-md shadow-sm border-gray-300" value="{{ old('nama_penyakit') }}" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="deskripsi" class="block font-medium text-sm text-gray-700">Deskripsi</label>
+                            <textarea name="deskripsi" id="deskripsi" rows="4" class="block mt-1 w-full rounded-md shadow-sm border-gray-300">{{ old('deskripsi') }}</textarea>
+                        </div>
+                        <div class="mb-4">
+                            <label for="solusi" class="block font-medium text-sm text-gray-700">Solusi</label>
+                            <textarea name="solusi" id="solusi" rows="4" class="block mt-1 w-full rounded-md shadow-sm border-gray-300">{{ old('solusi') }}</textarea>
+                        </div>
+                        <div class="flex items-center justify-end mt-4">
+                            <a href="{{ route($rolePrefix . '.penyakit.index') }}" class="text-sm text-gray-600 hover:text-gray-900 mr-4">Batal</a>
+                            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Simpan</button>
                         </div>
                     </form>
                 </div>
@@ -2021,45 +2039,35 @@ class Rule extends Model
 ===== resources\views\admin\penyakit\edit.blade.php =====
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Edit Penyakit') }}
-        </h2>
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Edit Penyakit') }}</h2>
     </x-slot>
-
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
-                    <form action="{{ route('admin.penyakit.update', $penyakit) }}" method="POST">
+                    @php $rolePrefix = Auth::user()->role; @endphp
+                    <form action="{{ route($rolePrefix . '.penyakit.update', $penyakit) }}" method="POST">
                         @csrf
                         @method('PUT')
-                        <div class="space-y-6">
-                            <div>
-                                <x-input-label for="kode_penyakit" :value="__('Kode Penyakit')" />
-                                <x-text-input id="kode_penyakit" name="kode_penyakit" type="text" class="mt-1 block w-full" :value="old('kode_penyakit', $penyakit->kode_penyakit)" required autofocus />
-                                <x-input-error class="mt-2" :messages="$errors->get('kode_penyakit')" />
-                            </div>
-                            <div>
-                                <x-input-label for="nama_penyakit" :value="__('Nama Penyakit')" />
-                                <x-text-input id="nama_penyakit" name="nama_penyakit" type="text" class="mt-1 block w-full" :value="old('nama_penyakit', $penyakit->nama_penyakit)" required />
-                                <x-input-error class="mt-2" :messages="$errors->get('nama_penyakit')" />
-                            </div>
-                            <div>
-                                <x-input-label for="deskripsi" :value="__('Deskripsi Penyakit')" />
-                                <textarea id="deskripsi" name="deskripsi" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm mt-1 block w-full" rows="4">{{ old('deskripsi', $penyakit->deskripsi) }}</textarea>
-                                <x-input-error class="mt-2" :messages="$errors->get('deskripsi')" />
-                            </div>
-                            <div>
-                                <x-input-label for="solusi" :value="__('Solusi Penyakit')" />
-                                <textarea id="solusi" name="solusi" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm mt-1 block w-full" rows="4">{{ old('solusi', $penyakit->solusi) }}</textarea>
-                                <x-input-error class="mt-2" :messages="$errors->get('solusi')" />
-                            </div>
-                            <div class="flex items-center gap-4">
-                                <x-primary-button>{{ __('Update') }}</x-primary-button>
-                                <a href="{{ route('admin.penyakit.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50">
-                                    {{ __('Batal') }}
-                                </a>
-                            </div>
+                        <div class="mb-4">
+                            <label for="kode_penyakit" class="block font-medium text-sm text-gray-700">Kode Penyakit</label>
+                            <input type="text" name="kode_penyakit" id="kode_penyakit" class="block mt-1 w-full rounded-md shadow-sm border-gray-300" value="{{ old('kode_penyakit', $penyakit->kode_penyakit) }}" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="nama_penyakit" class="block font-medium text-sm text-gray-700">Nama Penyakit</label>
+                            <input type="text" name="nama_penyakit" id="nama_penyakit" class="block mt-1 w-full rounded-md shadow-sm border-gray-300" value="{{ old('nama_penyakit', $penyakit->nama_penyakit) }}" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="deskripsi" class="block font-medium text-sm text-gray-700">Deskripsi</label>
+                            <textarea name="deskripsi" id="deskripsi" rows="4" class="block mt-1 w-full rounded-md shadow-sm border-gray-300">{{ old('deskripsi', $penyakit->deskripsi) }}</textarea>
+                        </div>
+                        <div class="mb-4">
+                            <label for="solusi" class="block font-medium text-sm text-gray-700">Solusi</label>
+                            <textarea name="solusi" id="solusi" rows="4" class="block mt-1 w-full rounded-md shadow-sm border-gray-300">{{ old('solusi', $penyakit->solusi) }}</textarea>
+                        </div>
+                        <div class="flex items-center justify-end mt-4">
+                            <a href="{{ route($rolePrefix . '.penyakit.index') }}" class="text-sm text-gray-600 hover:text-gray-900 mr-4">Batal</a>
+                            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Update</button>
                         </div>
                     </form>
                 </div>
@@ -2080,9 +2088,9 @@ class Rule extends Model
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
-
+                    @php $rolePrefix = Auth::user()->role; @endphp
                     <div class="mb-4">
-                        <a href="{{ route('admin.penyakit.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 active:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                        <a href="{{ route($rolePrefix . '.penyakit.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 active:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                             Tambah Penyakit
                         </a>
                     </div>
@@ -2097,10 +2105,10 @@ class Rule extends Model
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Penyakit</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Penyakit</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
@@ -2110,8 +2118,8 @@ class Rule extends Model
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $penyakit->kode_penyakit }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $penyakit->nama_penyakit }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <a href="{{ route('admin.penyakit.edit', $penyakit) }}" class="text-indigo-600 hover:text-indigo-900 mr-4">Edit</a>
-                                            <form action="{{ route('admin.penyakit.destroy', $penyakit) }}" method="POST" class="inline-block" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?');">
+                                            <a href="{{ route($rolePrefix . '.penyakit.edit', $penyakit) }}" class="text-indigo-600 hover:text-indigo-900 mr-4">Edit</a>
+                                            <form action="{{ route($rolePrefix . '.penyakit.destroy', $penyakit) }}" method="POST" class="inline-block" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?');">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="text-red-600 hover:text-red-900">Hapus</button>
@@ -2119,20 +2127,12 @@ class Rule extends Model
                                         </td>
                                     </tr>
                                 @empty
-                                    <tr>
-                                        <td colspan="4" class="px-6 py-4 text-center text-gray-500">
-                                            Data belum tersedia.
-                                        </td>
-                                    </tr>
+                                    <tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">Data belum tersedia.</td></tr>
                                 @endforelse
                             </tbody>
                         </table>
                     </div>
-
-                    <div class="mt-4">
-                        {{ $penyakits->links() }}
-                    </div>
-
+                    <div class="mt-4">{{ $penyakits->links() }}</div>
                 </div>
             </div>
         </div>
@@ -2334,10 +2334,10 @@ class Rule extends Model
                             <p class="font-semibold">Kelola Dokter</p>
                             <p class="text-sm text-indigo-100 mt-1">Tambah, edit, atau hapus data dokter.</p>
                         </a>
-                        <a href="{{ route('admin.rule.index') }}" class="rounded-lg bg-indigo-600 px-4 py-5 text-white shadow hover:bg-indigo-700 transition">
+                        {{-- <a href="{{ route('admin.rule.index') }}" class="rounded-lg bg-indigo-600 px-4 py-5 text-white shadow hover:bg-indigo-700 transition">
                             <p class="font-semibold">Kelola Aturan (Rule Base)</p>
                             <p class="text-sm text-indigo-100 mt-1">Hubungkan gejala dengan penyakit.</p>
-                        </a>
+                        </a> --}}
                     </div>
                 </div>
 
@@ -3202,7 +3202,7 @@ $classes = ($active ?? false)
                         <span class="text-lg font-bold">S</span>
                     </div>
                 </div>
-    
+
                 {{-- Teks Logo --}}
                 <div>
                     <p class="text-base font-bold text-gray-800 leading-tight">
@@ -3228,31 +3228,30 @@ $classes = ($active ?? false)
         </x-nav-link>
 
         {{-- Tampilkan menu ini jika rolenya 'admin' ATAU 'dokter' --}}
-        @if (in_array(Auth::user()->role, ['admin', 'dokter']))
+        {{-- Menu Khusus Admin --}}
+        @if (Auth::user()->role == 'admin')
+            <x-nav-link :href="route('admin.gejala.index')" :active="request()->routeIs('admin.gejala.*')">
+                {{ __('Gejala') }}
+            </x-nav-link>
+            <x-nav-link :href="route('admin.penyakit.index')" :active="request()->routeIs('admin.penyakit.*')">
+                {{ __('Penyakit') }}
+            </x-nav-link>
+            <x-nav-link :href="route('admin.dokter.index')" :active="request()->routeIs('admin.dokter.*')">
+                {{ __('Dokter') }}
+            </x-nav-link>
+        @endif
 
-            {{-- HANYA ADMIN YANG BISA MELIHAT INI --}}
-            @if (Auth::user()->role == 'admin')
-                <x-nav-link :href="route('admin.gejala.index')" :active="request()->routeIs('admin.gejala.*')">
-                    {{ __('Gejala') }}
-                </x-nav-link>
-                <x-nav-link :href="route('admin.penyakit.index')" :active="request()->routeIs('admin.penyakit.*')">
-                    {{ __('Penyakit') }}
-                </x-nav-link>
-                <x-nav-link :href="route('admin.dokter.index')" :active="request()->routeIs('admin.dokter.*')">
-                    {{ __('Dokter') }}
-                </x-nav-link>
-            @endif
-
-            {{-- ADMIN DAN DOKTER BISA MELIHAT INI --}}
-            {{-- Kita sesuaikan route-nya agar dinamis berdasarkan role --}}
-            @php
-                $ruleRoute = Auth::user()->role == 'admin' ? route('admin.rule.index') : route('dokter.rule.index');
-                $isRuleActive = request()->routeIs('admin.rule.*') || request()->routeIs('dokter.rule.*');
-            @endphp
-            <x-nav-link :href="$ruleRoute" :active="$isRuleActive">
+        {{-- Menu Khusus Dokter --}}
+        @if (Auth::user()->role == 'dokter')
+            <x-nav-link :href="route('dokter.gejala.index')" :active="request()->routeIs('dokter.gejala.*')">
+                {{ __('Gejala') }}
+            </x-nav-link>
+            <x-nav-link :href="route('dokter.penyakit.index')" :active="request()->routeIs('dokter.penyakit.*')">
+                {{ __('Penyakit') }}
+            </x-nav-link>
+            <x-nav-link :href="route('dokter.rule.index')" :active="request()->routeIs('dokter.rule.*')">
                 {{ __('Rule Base') }}
             </x-nav-link>
-
         @endif
         {{-- Navigasi Khusus Pengguna Biasa --}}
 

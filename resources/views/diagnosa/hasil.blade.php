@@ -36,10 +36,18 @@
                         </div>
                     </div>
 
-                    <div class="border-t pt-6">
-                        <h4 class="text-xl font-semibold text-gray-800">Saran Penanganan</h4>
-                        <div class="mt-2 prose max-w-none prose-p:text-gray-600">
-                            <p>{{ $diagnosaHistory->penyakit->solusi }}</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 border-t pt-6">
+                        <div>
+                            <h4 class="text-xl font-semibold text-gray-800">Saran Pencegahan</h4>
+                            <div class="mt-2 prose max-w-none prose-p:text-gray-600">
+                                <p>{{ $diagnosaHistory->penyakit->pencegahan ?? 'Informasi belum tersedia.' }}</p>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold text-gray-800">Saran Pengobatan</h4>
+                            <div class="mt-2 prose max-w-none prose-p:text-gray-600">
+                                <p>{{ $diagnosaHistory->penyakit->pengobatan ?? 'Informasi belum tersedia.' }}</p>
+                            </div>
                         </div>
                     </div>
 

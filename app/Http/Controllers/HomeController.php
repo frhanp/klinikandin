@@ -11,23 +11,24 @@ class HomeController extends Controller
      */
     public function kontak()
     {
-        // Data statis untuk kontak dokter dan lokasi praktek
-        // Nanti ini bisa diubah menjadi data dinamis dari database
         $kontakDokter = [
             [
-                'nama' => 'Klinik Andin (dr. H. Andi M. Sofyan)',
-                'alamat' => 'Jl. Pangeran Hidayat, No. 123, Kota Gorontalo',
-                'telepon' => '0812-3456-7890'
+                'nama_dokter' => 'Dr. Irma Suryani Darise, Sp.OT. Subsp. OTB(K)',
+                'tempat_praktek' => 'Apotek INSYIRAH',
+                'map_url' => 'https://maps.app.goo.gl/Lw3G6GnJX6e6r6XF7?g_st=aw',
+                'foto' => 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=2070&auto=format&fit=crop'
             ],
             [
-                'nama' => 'Praktek Cabang Limboto',
-                'alamat' => 'Jl. Jenderal Sudirman, No. 45, Limboto, Kab. Gorontalo',
-                'telepon' => '0852-9876-5432'
+                'nama_dokter' => 'Dr. Chairul Wahjudi, M.Kes, Sp.OT(K) Hip&Knee',
+                'tempat_praktek' => 'Klinik Pratama Mulia',
+                'map_url' => 'https://maps.app.goo.gl/i34n2JoStnra6e7GA?g_st=aw',
+                'foto' => 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=2070&auto=format&fit=crop'
             ],
             [
-                'nama' => 'Praktek Cabang Telaga',
-                'alamat' => 'Jl. Trans Sulawesi, Ruko Sebelah Bank, Telaga',
-                'telepon' => '0821-4567-8901'
+                'nama_dokter' => 'Dr. Irawan Huntoyungo, M.Kes, Sp.OT',
+                'tempat_praktek' => 'APOTEK ORTHOMEDIKA',
+                'map_url' => 'https://maps.app.goo.gl/Gq9mAp8HyzwpVrJG8?g_st=aw',
+                'foto' => 'https://images.unsplash.com/photo-1537368910025-700350796527?q=80&w=2070&auto=format&fit=crop'
             ],
         ];
 

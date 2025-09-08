@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Penyakit extends Model
 {
-    protected $fillable = ['kode_penyakit', 'nama_penyakit', 'deskripsi', 'solusi'];
+    protected $fillable = ['kode_penyakit', 'nama_penyakit', 'deskripsi', 'pencegahan', 'pengobatan'];
 
     // public function rules()
     // {
