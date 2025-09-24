@@ -69,6 +69,9 @@
             <x-nav-link :href="route('diagnosa.riwayat')" :active="request()->routeIs('diagnosa.riwayat')">
                 {{ __('Riwayat Diagnosa') }}
             </x-nav-link>
+            <x-nav-link :href="route('diagnosa-backward.index')" :active="request()->routeIs('diagnosa-backward.*')">
+                {{ __('Verifikasi Penyakit') }}
+            </x-nav-link>
         @endif
 
     </nav>

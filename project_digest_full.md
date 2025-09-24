@@ -1,5 +1,5 @@
 ﻿# Project Digest (Full Content)
-_Generated: 2025-09-01 23:11:34_
+_Generated: 2025-09-17 12:25:10_
 **Root:** D:\Laragon\www\klinikandin
 
 
@@ -107,6 +107,7 @@ database\migrations\2025_06_28_140421_create_gejalas_table.php
 database\migrations\2025_06_28_140422_create_penyakits_table.php
 database\migrations\2025_06_28_140424_create_rules_table.php
 database\migrations\2025_06_28_150106_create_diagnosa_histories_table.php
+database\migrations\2025_09_01_151444_update_penyakits_table_for_solutions.php
 database\seeders\DatabaseSeeder.php
 database\seeders\GejalaSeeder.php
 database\seeders\PenyakitSeeder.php
@@ -239,6 +240,7 @@ storage\framework\views\899084c187ed77f2461d6930d359fcd4.php
 storage\framework\views\8b6402ff1849aef6ae5a62b52a22734b.php
 storage\framework\views\9ca6c9b36058199e336d730d27a87fce.php
 storage\framework\views\b56843ce51385fdf12b8e632a98049f0.php
+storage\framework\views\b66d67d0023f0b8e7dd722a80dd1802d.php
 storage\framework\views\bdea1b8ed75254a5bd408d48a89d67ab.php
 storage\framework\views\c0f17148c7775688ed5f6038dd93a5f3.php
 storage\framework\views\d397bc38c568178fa52a32e07acf01a1.php
@@ -281,11 +283,11 @@ Branch:
 main
 
 Last 5 commits:
+7c968ee edit kontak
 c89696d ubah hak akses kedua kalinya
 0d5a617 add dokter dan revisian lainnya
 26cb2dc susun hak akses dan dashboard dokter
 9690027 perbaiki tampilan diagnosa
-65ed27c tambah kontak pada landing
 ```
 
 
@@ -468,76 +470,76 @@ require __DIR__ . '/auth.php';
 ## Routes (from command)
 ```
 
-  GET|HEAD        / ................................................................................................................... home
-  GET|HEAD        _debugbar/assets/javascript .................................. debugbar.assets.js ΓÇ║ Barryvdh\Debugbar ΓÇ║ AssetController@js
-  GET|HEAD        _debugbar/assets/stylesheets ............................... debugbar.assets.css ΓÇ║ Barryvdh\Debugbar ΓÇ║ AssetController@css
-  DELETE          _debugbar/cache/{key}/{tags?} ......................... debugbar.cache.delete ΓÇ║ Barryvdh\Debugbar ΓÇ║ CacheController@delete
-  GET|HEAD        _debugbar/clockwork/{id} ........................ debugbar.clockwork ΓÇ║ Barryvdh\Debugbar ΓÇ║ OpenHandlerController@clockwork
-  GET|HEAD        _debugbar/open ................................... debugbar.openhandler ΓÇ║ Barryvdh\Debugbar ΓÇ║ OpenHandlerController@handle
-  POST            _debugbar/queries/explain ....................... debugbar.queries.explain ΓÇ║ Barryvdh\Debugbar ΓÇ║ QueriesController@explain
-  GET|HEAD        admin/dashboard .............................................................. admin.dashboard ΓÇ║ Admin\DashboardController
-  GET|HEAD        admin/dokter ........................................................... admin.dokter.index ΓÇ║ Admin\DokterController@index
-  POST            admin/dokter ........................................................... admin.dokter.store ΓÇ║ Admin\DokterController@store
-  GET|HEAD        admin/dokter/create .................................................. admin.dokter.create ΓÇ║ Admin\DokterController@create
-  PUT|PATCH       admin/dokter/{dokter} ................................................ admin.dokter.update ΓÇ║ Admin\DokterController@update
-  DELETE          admin/dokter/{dokter} .............................................. admin.dokter.destroy ΓÇ║ Admin\DokterController@destroy
-  GET|HEAD        admin/dokter/{dokter}/edit ............................................... admin.dokter.edit ΓÇ║ Admin\DokterController@edit
-  GET|HEAD        admin/gejala ........................................................... admin.gejala.index ΓÇ║ Admin\GejalaController@index
-  POST            admin/gejala ........................................................... admin.gejala.store ΓÇ║ Admin\GejalaController@store
-  GET|HEAD        admin/gejala/create .................................................. admin.gejala.create ΓÇ║ Admin\GejalaController@create
-  PUT|PATCH       admin/gejala/{gejala} ................................................ admin.gejala.update ΓÇ║ Admin\GejalaController@update
-  DELETE          admin/gejala/{gejala} .............................................. admin.gejala.destroy ΓÇ║ Admin\GejalaController@destroy
-  GET|HEAD        admin/gejala/{gejala}/edit ............................................... admin.gejala.edit ΓÇ║ Admin\GejalaController@edit
-  GET|HEAD        admin/penyakit ..................................................... admin.penyakit.index ΓÇ║ Admin\PenyakitController@index
-  POST            admin/penyakit ..................................................... admin.penyakit.store ΓÇ║ Admin\PenyakitController@store
-  GET|HEAD        admin/penyakit/create ............................................ admin.penyakit.create ΓÇ║ Admin\PenyakitController@create
-  PUT|PATCH       admin/penyakit/{penyakit} ........................................ admin.penyakit.update ΓÇ║ Admin\PenyakitController@update
-  DELETE          admin/penyakit/{penyakit} ...................................... admin.penyakit.destroy ΓÇ║ Admin\PenyakitController@destroy
-  GET|HEAD        admin/penyakit/{penyakit}/edit ....................................... admin.penyakit.edit ΓÇ║ Admin\PenyakitController@edit
-  GET|HEAD        confirm-password .............................................. password.confirm ΓÇ║ Auth\ConfirmablePasswordController@show
-  POST            confirm-password ................................................................ Auth\ConfirmablePasswordController@store
-  GET|HEAD        dashboard ...................................................................................................... dashboard
-  GET|HEAD        diagnosa ....................................................................... diagnosa.index ΓÇ║ DiagnosaController@index
-  POST            diagnosa ................................................................... diagnosa.process ΓÇ║ DiagnosaController@process
-  GET|HEAD        diagnosa/hasil/{diagnosaHistory} ............................................... diagnosa.hasil ΓÇ║ DiagnosaController@hasil
-  GET|HEAD        diagnosa/riwayat ........................................................... diagnosa.riwayat ΓÇ║ DiagnosaController@riwayat
-  GET|HEAD        dokter/dashboard ..................................................... dokter.dashboard ΓÇ║ Dokter\DashboardController@index
-  GET|HEAD        dokter/gejala ......................................................... dokter.gejala.index ΓÇ║ Admin\GejalaController@index
-  POST            dokter/gejala ......................................................... dokter.gejala.store ΓÇ║ Admin\GejalaController@store
-  GET|HEAD        dokter/gejala/create ................................................ dokter.gejala.create ΓÇ║ Admin\GejalaController@create
-  PUT|PATCH       dokter/gejala/{gejala} .............................................. dokter.gejala.update ΓÇ║ Admin\GejalaController@update
-  DELETE          dokter/gejala/{gejala} ............................................ dokter.gejala.destroy ΓÇ║ Admin\GejalaController@destroy
-  GET|HEAD        dokter/gejala/{gejala}/edit ............................................. dokter.gejala.edit ΓÇ║ Admin\GejalaController@edit
-  GET|HEAD        dokter/penyakit ................................................... dokter.penyakit.index ΓÇ║ Admin\PenyakitController@index
-  POST            dokter/penyakit ................................................... dokter.penyakit.store ΓÇ║ Admin\PenyakitController@store
-  GET|HEAD        dokter/penyakit/create .......................................... dokter.penyakit.create ΓÇ║ Admin\PenyakitController@create
-  PUT|PATCH       dokter/penyakit/{penyakit} ...................................... dokter.penyakit.update ΓÇ║ Admin\PenyakitController@update
-  DELETE          dokter/penyakit/{penyakit} .................................... dokter.penyakit.destroy ΓÇ║ Admin\PenyakitController@destroy
-  GET|HEAD        dokter/penyakit/{penyakit}/edit ..................................... dokter.penyakit.edit ΓÇ║ Admin\PenyakitController@edit
-  GET|HEAD        dokter/rule .............................................................. dokter.rule.index ΓÇ║ Dokter\RuleController@index
-  PUT             dokter/rule/{penyakit} ................................................. dokter.rule.update ΓÇ║ Dokter\RuleController@update
-  GET|HEAD        dokter/rule/{penyakit}/edit ................................................ dokter.rule.edit ΓÇ║ Dokter\RuleController@edit
-  POST            email/verification-notification ................... verification.send ΓÇ║ Auth\EmailVerificationNotificationController@store
-  GET|HEAD        forgot-password ............................................... password.request ΓÇ║ Auth\PasswordResetLinkController@create
-  POST            forgot-password .................................................. password.email ΓÇ║ Auth\PasswordResetLinkController@store
-  GET|HEAD        kontak .................................................................................... kontak ΓÇ║ HomeController@kontak
-  GET|HEAD        login ................................................................. login ΓÇ║ Auth\AuthenticatedSessionController@create
-  POST            login .......................................................................... Auth\AuthenticatedSessionController@store
-  POST            logout .............................................................. logout ΓÇ║ Auth\AuthenticatedSessionController@destroy
-  PUT             password ................................................................ password.update ΓÇ║ Auth\PasswordController@update
-  GET|HEAD        profile ............................................................................ profile.edit ΓÇ║ ProfileController@edit
-  PATCH           profile ........................................................................ profile.update ΓÇ║ ProfileController@update
-  DELETE          profile ...................................................................... profile.destroy ΓÇ║ ProfileController@destroy
-  GET|HEAD        register ................................................................. register ΓÇ║ Auth\RegisteredUserController@create
-  POST            register ............................................................................. Auth\RegisteredUserController@store
-  POST            reset-password ......................................................... password.store ΓÇ║ Auth\NewPasswordController@store
-  GET|HEAD        reset-password/{token} ................................................ password.reset ΓÇ║ Auth\NewPasswordController@create
-  GET|HEAD        storage/{path} ............................................................................................. storage.local
-  GET|HEAD        up ....................................................................................................................... 
-  GET|HEAD        verify-email ................................................ verification.notice ΓÇ║ Auth\EmailVerificationPromptController
-  GET|HEAD        verify-email/{id}/{hash} ................................................ verification.verify ΓÇ║ Auth\VerifyEmailController
+  GET|HEAD        / ......................................................................................................................... home
+  GET|HEAD        _debugbar/assets/javascript ........................................ debugbar.assets.js ΓÇ║ Barryvdh\Debugbar ΓÇ║ AssetController@js
+  GET|HEAD        _debugbar/assets/stylesheets ..................................... debugbar.assets.css ΓÇ║ Barryvdh\Debugbar ΓÇ║ AssetController@css
+  DELETE          _debugbar/cache/{key}/{tags?} ............................... debugbar.cache.delete ΓÇ║ Barryvdh\Debugbar ΓÇ║ CacheController@delete
+  GET|HEAD        _debugbar/clockwork/{id} .............................. debugbar.clockwork ΓÇ║ Barryvdh\Debugbar ΓÇ║ OpenHandlerController@clockwork
+  GET|HEAD        _debugbar/open ......................................... debugbar.openhandler ΓÇ║ Barryvdh\Debugbar ΓÇ║ OpenHandlerController@handle
+  POST            _debugbar/queries/explain ............................. debugbar.queries.explain ΓÇ║ Barryvdh\Debugbar ΓÇ║ QueriesController@explain
+  GET|HEAD        admin/dashboard .................................................................... admin.dashboard ΓÇ║ Admin\DashboardController
+  GET|HEAD        admin/dokter ................................................................. admin.dokter.index ΓÇ║ Admin\DokterController@index
+  POST            admin/dokter ................................................................. admin.dokter.store ΓÇ║ Admin\DokterController@store
+  GET|HEAD        admin/dokter/create ........................................................ admin.dokter.create ΓÇ║ Admin\DokterController@create
+  PUT|PATCH       admin/dokter/{dokter} ...................................................... admin.dokter.update ΓÇ║ Admin\DokterController@update
+  DELETE          admin/dokter/{dokter} .................................................... admin.dokter.destroy ΓÇ║ Admin\DokterController@destroy
+  GET|HEAD        admin/dokter/{dokter}/edit ..................................................... admin.dokter.edit ΓÇ║ Admin\DokterController@edit
+  GET|HEAD        admin/gejala ................................................................. admin.gejala.index ΓÇ║ Admin\GejalaController@index
+  POST            admin/gejala ................................................................. admin.gejala.store ΓÇ║ Admin\GejalaController@store
+  GET|HEAD        admin/gejala/create ........................................................ admin.gejala.create ΓÇ║ Admin\GejalaController@create
+  PUT|PATCH       admin/gejala/{gejala} ...................................................... admin.gejala.update ΓÇ║ Admin\GejalaController@update
+  DELETE          admin/gejala/{gejala} .................................................... admin.gejala.destroy ΓÇ║ Admin\GejalaController@destroy
+  GET|HEAD        admin/gejala/{gejala}/edit ..................................................... admin.gejala.edit ΓÇ║ Admin\GejalaController@edit
+  GET|HEAD        admin/penyakit ........................................................... admin.penyakit.index ΓÇ║ Admin\PenyakitController@index
+  POST            admin/penyakit ........................................................... admin.penyakit.store ΓÇ║ Admin\PenyakitController@store
+  GET|HEAD        admin/penyakit/create .................................................. admin.penyakit.create ΓÇ║ Admin\PenyakitController@create
+  PUT|PATCH       admin/penyakit/{penyakit} .............................................. admin.penyakit.update ΓÇ║ Admin\PenyakitController@update
+  DELETE          admin/penyakit/{penyakit} ............................................ admin.penyakit.destroy ΓÇ║ Admin\PenyakitController@destroy
+  GET|HEAD        admin/penyakit/{penyakit}/edit ............................................. admin.penyakit.edit ΓÇ║ Admin\PenyakitController@edit
+  GET|HEAD        confirm-password .................................................... password.confirm ΓÇ║ Auth\ConfirmablePasswordController@show
+  POST            confirm-password ...................................................................... Auth\ConfirmablePasswordController@store
+  GET|HEAD        dashboard ............................................................................................................ dashboard
+  GET|HEAD        diagnosa ............................................................................. diagnosa.index ΓÇ║ DiagnosaController@index
+  POST            diagnosa ......................................................................... diagnosa.process ΓÇ║ DiagnosaController@process
+  GET|HEAD        diagnosa/hasil/{diagnosaHistory} ..................................................... diagnosa.hasil ΓÇ║ DiagnosaController@hasil
+  GET|HEAD        diagnosa/riwayat ................................................................. diagnosa.riwayat ΓÇ║ DiagnosaController@riwayat
+  GET|HEAD        dokter/dashboard ........................................................... dokter.dashboard ΓÇ║ Dokter\DashboardController@index
+  GET|HEAD        dokter/gejala ............................................................... dokter.gejala.index ΓÇ║ Admin\GejalaController@index
+  POST            dokter/gejala ............................................................... dokter.gejala.store ΓÇ║ Admin\GejalaController@store
+  GET|HEAD        dokter/gejala/create ...................................................... dokter.gejala.create ΓÇ║ Admin\GejalaController@create
+  PUT|PATCH       dokter/gejala/{gejala} .................................................... dokter.gejala.update ΓÇ║ Admin\GejalaController@update
+  DELETE          dokter/gejala/{gejala} .................................................. dokter.gejala.destroy ΓÇ║ Admin\GejalaController@destroy
+  GET|HEAD        dokter/gejala/{gejala}/edit ................................................... dokter.gejala.edit ΓÇ║ Admin\GejalaController@edit
+  GET|HEAD        dokter/penyakit ......................................................... dokter.penyakit.index ΓÇ║ Admin\PenyakitController@index
+  POST            dokter/penyakit ......................................................... dokter.penyakit.store ΓÇ║ Admin\PenyakitController@store
+  GET|HEAD        dokter/penyakit/create ................................................ dokter.penyakit.create ΓÇ║ Admin\PenyakitController@create
+  PUT|PATCH       dokter/penyakit/{penyakit} ............................................ dokter.penyakit.update ΓÇ║ Admin\PenyakitController@update
+  DELETE          dokter/penyakit/{penyakit} .......................................... dokter.penyakit.destroy ΓÇ║ Admin\PenyakitController@destroy
+  GET|HEAD        dokter/penyakit/{penyakit}/edit ........................................... dokter.penyakit.edit ΓÇ║ Admin\PenyakitController@edit
+  GET|HEAD        dokter/rule .................................................................... dokter.rule.index ΓÇ║ Dokter\RuleController@index
+  PUT             dokter/rule/{penyakit} ....................................................... dokter.rule.update ΓÇ║ Dokter\RuleController@update
+  GET|HEAD        dokter/rule/{penyakit}/edit ...................................................... dokter.rule.edit ΓÇ║ Dokter\RuleController@edit
+  POST            email/verification-notification ......................... verification.send ΓÇ║ Auth\EmailVerificationNotificationController@store
+  GET|HEAD        forgot-password ..................................................... password.request ΓÇ║ Auth\PasswordResetLinkController@create
+  POST            forgot-password ........................................................ password.email ΓÇ║ Auth\PasswordResetLinkController@store
+  GET|HEAD        kontak .......................................................................................... kontak ΓÇ║ HomeController@kontak
+  GET|HEAD        login ....................................................................... login ΓÇ║ Auth\AuthenticatedSessionController@create
+  POST            login ................................................................................ Auth\AuthenticatedSessionController@store
+  POST            logout .................................................................... logout ΓÇ║ Auth\AuthenticatedSessionController@destroy
+  PUT             password ...................................................................... password.update ΓÇ║ Auth\PasswordController@update
+  GET|HEAD        profile .................................................................................. profile.edit ΓÇ║ ProfileController@edit
+  PATCH           profile .............................................................................. profile.update ΓÇ║ ProfileController@update
+  DELETE          profile ............................................................................ profile.destroy ΓÇ║ ProfileController@destroy
+  GET|HEAD        register ....................................................................... register ΓÇ║ Auth\RegisteredUserController@create
+  POST            register ................................................................................... Auth\RegisteredUserController@store
+  POST            reset-password ............................................................... password.store ΓÇ║ Auth\NewPasswordController@store
+  GET|HEAD        reset-password/{token} ...................................................... password.reset ΓÇ║ Auth\NewPasswordController@create
+  GET|HEAD        storage/{path} ................................................................................................... storage.local
+  GET|HEAD        up ............................................................................................................................. 
+  GET|HEAD        verify-email ...................................................... verification.notice ΓÇ║ Auth\EmailVerificationPromptController
+  GET|HEAD        verify-email/{id}/{hash} ...................................................... verification.verify ΓÇ║ Auth\VerifyEmailController
 
-                                                                                                                         Showing [68] routes
+                                                                                                                               Showing [68] routes
 
 ```
 
@@ -793,7 +795,8 @@ class PenyakitController extends Controller
             'kode_penyakit' => 'required|string|unique:penyakits,kode_penyakit|max:10',
             'nama_penyakit' => 'required|string|max:255',
             'deskripsi' => 'required|string',
-            'solusi' => 'required|string',
+            'pencegahan' => 'required|string',
+            'pengobatan' => 'required|string',
         ]);
 
         Penyakit::create($request->all());
@@ -819,7 +822,9 @@ class PenyakitController extends Controller
             'kode_penyakit' => 'required|string|max:10|unique:penyakits,kode_penyakit,' . $penyakit->id,
             'nama_penyakit' => 'required|string|max:255',
             'deskripsi' => 'required|string',
-            'solusi' => 'required|string',
+            'pencegahan' => 'required|string',
+            'pengobatan' => 'required|string',
+
         ]);
 
         $penyakit->update($request->all());
@@ -1462,23 +1467,24 @@ class HomeController extends Controller
      */
     public function kontak()
     {
-        // Data statis untuk kontak dokter dan lokasi praktek
-        // Nanti ini bisa diubah menjadi data dinamis dari database
         $kontakDokter = [
             [
-                'nama' => 'Klinik Andin (dr. H. Andi M. Sofyan)',
-                'alamat' => 'Jl. Pangeran Hidayat, No. 123, Kota Gorontalo',
-                'telepon' => '0812-3456-7890'
+                'nama_dokter' => 'Dr. Irma Suryani Darise, Sp.OT. Subsp. OTB(K)',
+                'tempat_praktek' => 'Apotek INSYIRAH',
+                'map_url' => 'https://maps.app.goo.gl/Lw3G6GnJX6e6r6XF7?g_st=aw',
+                'foto' => 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=2070&auto=format&fit=crop'
             ],
             [
-                'nama' => 'Praktek Cabang Limboto',
-                'alamat' => 'Jl. Jenderal Sudirman, No. 45, Limboto, Kab. Gorontalo',
-                'telepon' => '0852-9876-5432'
+                'nama_dokter' => 'Dr. Chairul Wahjudi, M.Kes, Sp.OT(K) Hip&Knee',
+                'tempat_praktek' => 'Klinik Pratama Mulia',
+                'map_url' => 'https://maps.app.goo.gl/i34n2JoStnra6e7GA?g_st=aw',
+                'foto' => 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=2070&auto=format&fit=crop'
             ],
             [
-                'nama' => 'Praktek Cabang Telaga',
-                'alamat' => 'Jl. Trans Sulawesi, Ruko Sebelah Bank, Telaga',
-                'telepon' => '0821-4567-8901'
+                'nama_dokter' => 'Dr. Irawan Huntoyungo, M.Kes, Sp.OT',
+                'tempat_praktek' => 'APOTEK ORTHOMEDIKA',
+                'map_url' => 'https://maps.app.goo.gl/Gq9mAp8HyzwpVrJG8?g_st=aw',
+                'foto' => 'https://images.unsplash.com/photo-1537368910025-700350796527?q=80&w=2070&auto=format&fit=crop'
             ],
         ];
 
@@ -1630,7 +1636,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Penyakit extends Model
 {
-    protected $fillable = ['kode_penyakit', 'nama_penyakit', 'deskripsi', 'solusi'];
+    protected $fillable = ['kode_penyakit', 'nama_penyakit', 'deskripsi', 'pencegahan', 'pengobatan'];
 
     // public function rules()
     // {
@@ -2022,8 +2028,12 @@ class Rule extends Model
                             <textarea name="deskripsi" id="deskripsi" rows="4" class="block mt-1 w-full rounded-md shadow-sm border-gray-300">{{ old('deskripsi') }}</textarea>
                         </div>
                         <div class="mb-4">
-                            <label for="solusi" class="block font-medium text-sm text-gray-700">Solusi</label>
-                            <textarea name="solusi" id="solusi" rows="4" class="block mt-1 w-full rounded-md shadow-sm border-gray-300">{{ old('solusi') }}</textarea>
+                            <label for="pencegahan" class="block font-medium text-sm text-gray-700">Saran Pencegahan</label>
+                            <textarea name="pencegahan" id="pencegahan" rows="4" class="block mt-1 w-full rounded-md shadow-sm border-gray-300">{{ old('pencegahan') }}</textarea>
+                        </div>
+                        <div class="mb-4">
+                            <label for="pengobatan" class="block font-medium text-sm text-gray-700">Saran Pengobatan</label>
+                            <textarea name="pengobatan" id="pengobatan" rows="4" class="block mt-1 w-full rounded-md shadow-sm border-gray-300">{{ old('pengobatan') }}</textarea>
                         </div>
                         <div class="flex items-center justify-end mt-4">
                             <a href="{{ route($rolePrefix . '.penyakit.index') }}" class="text-sm text-gray-600 hover:text-gray-900 mr-4">Batal</a>
@@ -2062,8 +2072,12 @@ class Rule extends Model
                             <textarea name="deskripsi" id="deskripsi" rows="4" class="block mt-1 w-full rounded-md shadow-sm border-gray-300">{{ old('deskripsi', $penyakit->deskripsi) }}</textarea>
                         </div>
                         <div class="mb-4">
-                            <label for="solusi" class="block font-medium text-sm text-gray-700">Solusi</label>
-                            <textarea name="solusi" id="solusi" rows="4" class="block mt-1 w-full rounded-md shadow-sm border-gray-300">{{ old('solusi', $penyakit->solusi) }}</textarea>
+                            <label for="pencegahan" class="block font-medium text-sm text-gray-700">Saran Pencegahan</label>
+                            <textarea name="pencegahan" id="pencegahan" rows="4" class="block mt-1 w-full rounded-md shadow-sm border-gray-300">{{ old('pencegahan', $penyakit->pencegahan) }}</textarea>
+                        </div>
+                        <div class="mb-4">
+                            <label for="pengobatan" class="block font-medium text-sm text-gray-700">Saran Pengobatan</label>
+                            <textarea name="pengobatan" id="pengobatan" rows="4" class="block mt-1 w-full rounded-md shadow-sm border-gray-300">{{ old('pengobatan', $penyakit->pengobatan) }}</textarea>
                         </div>
                         <div class="flex items-center justify-end mt-4">
                             <a href="{{ route($rolePrefix . '.penyakit.index') }}" class="text-sm text-gray-600 hover:text-gray-900 mr-4">Batal</a>
@@ -2880,10 +2894,18 @@ $classes = ($active ?? false)
                         </div>
                     </div>
 
-                    <div class="border-t pt-6">
-                        <h4 class="text-xl font-semibold text-gray-800">Saran Penanganan</h4>
-                        <div class="mt-2 prose max-w-none prose-p:text-gray-600">
-                            <p>{{ $diagnosaHistory->penyakit->solusi }}</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 border-t pt-6">
+                        <div>
+                            <h4 class="text-xl font-semibold text-gray-800">Saran Pencegahan</h4>
+                            <div class="mt-2 prose max-w-none prose-p:text-gray-600">
+                                <p>{{ $diagnosaHistory->penyakit->pencegahan ?? 'Informasi belum tersedia.' }}</p>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold text-gray-800">Saran Pengobatan</h4>
+                            <div class="mt-2 prose max-w-none prose-p:text-gray-600">
+                                <p>{{ $diagnosaHistory->penyakit->pengobatan ?? 'Informasi belum tersedia.' }}</p>
+                            </div>
                         </div>
                     </div>
 
@@ -3292,136 +3314,185 @@ $classes = ($active ?? false)
 </aside>
 
 ===== resources\views\pages\kontak.blade.php =====
-{{-- resources/views/pages/kontak.blade.php --}}
-
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Kontak Kami - Klinik Andin</title>
-
+    <meta name="description" content="Lokasi praktek dan kontak dokter Klinik Andin.">
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
-
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        /* underline hover: indigo, minimalist */
+        .link-underline {
+            background: linear-gradient(to right, rgb(79 70 229), rgb(79 70 229)) left bottom/0 2px no-repeat;
+            transition: background-size .25s ease;
+        }
+        .link-underline:hover { background-size: 100% 2px; }
+        /* subtle card shine on hover */
+        .shine::after{
+            content:"";
+            position:absolute; inset:0;
+            background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,.25) 40%, transparent 60%);
+            transform: translateX(-100%);
+            transition: transform .6s ease;
+            pointer-events:none;
+        }
+        .shine:hover::after{ transform: translateX(100%); }
+    </style>
 </head>
-
 <body class="antialiased bg-gray-50 text-gray-800">
-    <div class="min-h-screen flex flex-col">
+<div class="relative min-h-screen flex flex-col">
 
-        {{-- resources/views/pages/kontak.blade.php --}}
+    <!-- Decorative gradient blobs (tetap netral, tidak ubah warna utama) -->
+    <div class="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div class="absolute -top-40 left-1/2 w-[46rem] aspect-[1/1] -translate-x-1/2 rounded-full bg-gradient-to-tr from-[#80ffc5]/30 to-[#7c3aed]/30 blur-3xl"></div>
+        <div class="absolute -bottom-48 -right-10 w-[36rem] aspect-[1/1] rounded-full bg-gradient-to-tr from-[#7c3aed]/20 to-[#80ffc5]/20 blur-3xl"></div>
+    </div>
 
-        {{-- resources/views/pages/kontak.blade.php --}}
+    <!-- Header glass -->
+    <header class="bg-white/70 backdrop-blur-md shadow-sm ring-1 ring-black/5 sticky top-0 z-50">
+        <nav class="flex items-center justify-between p-5 lg:px-8 max-w-7xl mx-auto" aria-label="Global">
+            <div class="flex lg:flex-1">
+                <a href="/" class="-m-1.5 p-1.5 inline-flex items-center gap-2">
+                    <span class="text-xl font-bold text-indigo-600">Klinik Andin</span>
+                </a>
+            </div>
+            <div class="flex lg:flex-1 justify-end items-center gap-x-6">
+                <a href="{{ route('kontak') }}" class="text-sm font-semibold leading-6 text-indigo-600 link-underline">Kontak</a>
+                @if (Route::has('login'))
+                    @auth
+                        <a href="{{ url('/dashboard') }}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-indigo-600 transition-colors">
+                            Dashboard <span aria-hidden="true">â†’</span>
+                        </a>
+                    @else
+                        <a href="{{ route('login') }}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-indigo-600 transition-colors">
+                            Log in <span aria-hidden="true">â†’</span>
+                        </a>
+                    @endauth
+                @endif
+            </div>
+        </nav>
+    </header>
 
-        {{-- Ganti tag <header> yang lama dengan yang ini --}}
-        <header class="bg-white/95 backdrop-blur-sm shadow-sm ring-1 ring-gray-900/5">
-            <nav class="flex items-center justify-between p-6 lg:px-8 max-w-7xl mx-auto" aria-label="Global">
-                {{-- LOGO DI KIRI --}}
-                <div class="flex lg:flex-1">
-                    <a href="/" class="-m-1.5 p-1.5">
-                        <span class="text-xl font-bold text-indigo-600">Klinik Andin</span>
-                    </a>
-                </div>
-
-                {{-- SEMUA LINK NAVIGASI DI KANAN --}}
-                <div class="hidden lg:flex lg:items-center lg:gap-x-6">
-                    {{-- Link Kontak ditandai aktif dengan warna indigo --}}
-                    <a href="{{ route('kontak') }}" class="text-sm font-semibold leading-6 text-indigo-600">Kontak</a>
-
-                    @if (Route::has('login'))
-                        {{-- Garis Pemisah Vertikal --}}
-                        <span class="h-6 w-px bg-gray-200" aria-hidden="true"></span>
-
-                        @auth
-                            <a href="{{ url('/dashboard') }}"
-                                class="text-sm font-semibold leading-6 text-gray-900 hover:text-indigo-600">Dashboard <span
-                                    aria-hidden="true">&rarr;</span></a>
-                        @else
-                            <a href="{{ route('login') }}"
-                                class="text-sm font-semibold leading-6 text-gray-900 hover:text-indigo-600">Log in <span
-                                    aria-hidden="true">&rarr;</span></a>
-                        @endauth
-                    @endif
-                </div>
-            </nav>
-        </header>
-
-        <main class="flex-grow">
-            {{-- Bagian ini sudah disesuaikan dengan tema warna proyek (Indigo & Gray) --}}
-            <div class="bg-white">
-                <section class="py-20 md:py-28 px-4">
-                    <div class="max-w-5xl mx-auto">
-
-                        {{-- Judul Halaman --}}
-                        <div class="text-center mb-16">
-                            <h2 class="text-4xl md:text-5xl font-bold tracking-tight text-gray-900">
-                                Kontak & Lokasi Praktek
-                            </h2>
-                            <p class="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">
-                                Temukan alamat praktek kami yang terdekat dengan Anda.
-                            </p>
+    <main class="flex-grow">
+        <!-- Hero -->
+        <section class="bg-white">
+            <div class="relative isolate px-6 pt-16 lg:px-8">
+                <div class="mx-auto max-w-2xl py-20 sm:py-28">
+                    <div class="text-center">
+                        <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl" data-reveal>
+                            Lokasi Praktek Dokter
+                        </h1>
+                        <p class="mt-6 text-lg leading-8 text-gray-600" data-reveal data-reveal-delay="100">
+                            Temukan dokter spesialis tulang terbaik kami di lokasi-lokasi berikut. Kami siap memberikan pelayanan kesehatan tulang yang komprehensif untuk Anda.
+                        </p>
+                        <div class="mt-8 flex items-center justify-center gap-3 text-xs text-gray-500" data-reveal data-reveal-delay="180">
+                            <span class="inline-flex items-center gap-2 rounded-full bg-gray-50 px-3 py-1 ring-1 ring-gray-200">
+                                <span class="size-1.5 rounded-full bg-indigo-600"></span> Terverifikasi
+                            </span>
+                            <span class="inline-flex items-center gap-2 rounded-full bg-gray-50 px-3 py-1 ring-1 ring-gray-200">
+                                <span class="size-1.5 rounded-full bg-gray-800"></span> Jadwal Fleksibel
+                            </span>
+                            <span class="inline-flex items-center gap-2 rounded-full bg-gray-50 px-3 py-1 ring-1 ring-gray-200">
+                                <span class="size-1.5 rounded-full bg-gray-400"></span> Konsultasi Nyaman
+                            </span>
                         </div>
+                    </div>
+                </div>
+            </div>
 
-                        {{-- Grid untuk menampilkan alamat --}}
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Doctors grid -->
+            <div class="bg-gray-50 py-20 sm:py-24">
+                <div class="mx-auto max-w-7xl px-6 lg:px-8">
+                    <div class="mx-auto max-w-2xl lg:mx-0">
+                        <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl" data-reveal>Tim Dokter Spesialis Kami</h2>
+                    </div>
 
-                            @foreach ($kontakDokter as $kontak)
-                                <div
-                                    class="bg-gray-50 rounded-xl shadow-lg p-6 flex space-x-6 transition-all duration-300 ease-in-out hover:shadow-xl hover:-translate-y-1 ring-1 ring-gray-200">
-                                    {{-- Ikon --}}
-                                    <div
-                                        class="flex-shrink-0 bg-indigo-100 text-indigo-600 rounded-lg w-14 h-14 flex items-center justify-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                            stroke-width="1.5" stroke="currentColor" class="size-7">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" />
-                                        </svg>
+                    <ul role="list"
+                        class="mx-auto mt-14 grid max-w-2xl grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:mx-0 lg:max-w-none lg:grid-cols-3">
+                        @foreach ($kontakDokter as $kontak)
+                            <li class="group relative" data-reveal>
+                                <div class="shine relative overflow-hidden rounded-2xl bg-white/70 backdrop-blur-sm shadow-sm ring-1 ring-gray-200 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl">
+                                    <div class="relative">
+                                        <img class="aspect-[3/2] w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                                             src="{{ $kontak['foto'] }}" alt="Foto dokter {{ $kontak['nama_dokter'] }}">
+                                        <!-- soft gradient overlay -->
+                                        <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent opacity-70"></div>
+                                        <!-- floating badge -->
+                                        <div class="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-gray-700 ring-1 ring-gray-200">
+                                            <svg viewBox="0 0 20 20" class="size-4" fill="currentColor" aria-hidden="true">
+                                                <path d="M3 9a7 7 0 1 0 14 0A7 7 0 0 0 3 9Zm7-4a1 1 0 0 1 1 1v2h2a1 1 0 1 1 0 2h-2v2a1 1 0 1 1-2 0v-2H7a1 1 0 1 1 0-2h2V6a1 1 0 0 1 1-1Z"/>
+                                            </svg>
+                                            Klinik Andin
+                                        </div>
                                     </div>
 
-                                    {{-- Detail Alamat --}}
-                                    <div class="flex flex-col justify-between">
-                                        <div>
-                                            <h3 class="text-lg font-bold text-gray-900">{{ $kontak['nama'] }}</h3>
-                                            <p class="mt-1 text-gray-600 leading-relaxed">{{ $kontak['alamat'] }}</p>
-                                            <p class="mt-2 text-sm text-gray-500">Telp: {{ $kontak['telepon'] }}</p>
+                                    <div class="p-6">
+                                        <h3 class="font-semibold leading-8 tracking-tight text-gray-900 text-lg">
+                                            {{ $kontak['nama_dokter'] }}
+                                        </h3>
+                                        <div class="mt-1 flex items-start gap-2 text-sm text-gray-600">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5 opacity-70">
+                                                <path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 0 0 .281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 1 0 3 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 0 0 2.274 1.765 11.842 11.842 0 0 0 .979.57c.01.006.014.009.018.008l.006.003Z" clip-rule="evenodd" />
+                                                <path d="M10 11.25a2.25 2.25 0 1 0 0-4.5 2.25 2.25 0 0 0 0 4.5Z" />
+                                            </svg>
+                                            <span>{{ $kontak['tempat_praktek'] }}</span>
                                         </div>
 
-                                        {{-- Link Google Maps --}}
-                                        <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($kontak['alamat']) }}"
-                                            target="_blank"
-                                            class="mt-3 text-sm font-semibold text-indigo-600 hover:text-indigo-500 inline-flex items-center">
+                                        <a href="{{ $kontak['map_url'] }}" target="_blank"
+                                           class="mt-5 inline-flex items-center gap-x-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition">
                                             Lihat di Peta
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                                stroke-width="2" stroke="currentColor" class="w-4 h-4 ml-1">
-                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                    d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                                                 stroke-width="1.5" stroke="currentColor" class="size-5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m0 0v2.25m0-2.25h3.75m-3.75 0H5.25m11.25 0v2.25m0-2.25h-3.75m3.75 0h.375c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5c0-.621.504-1.125 1.125-1.125h.375m-8.25 0v2.25m0-2.25h-3.75m3.75 0h.375a1.125 1.125 0 0 1 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5c0-.621.504-1.125 1.125-1.125h.375M3 19.5h18" />
                                             </svg>
                                         </a>
                                     </div>
                                 </div>
-                            @endforeach
-
-                        </div>
-
-                    </div>
-                </section>
-            </div>
-        </main>
-
-        <footer class="bg-gray-900 text-white">
-            <div class="mx-auto max-w-7xl px-6 py-12 md:flex md:items-center md:justify-between lg:px-8">
-                <div class="mt-8 md:order-1 md:mt-0">
-                    <p class="text-center text-xs leading-5 text-gray-400">Â© {{ date('Y') }} Klinik Andin. All
-                        rights reserved.</p>
+                            </li>
+                        @endforeach
+                    </ul>
                 </div>
             </div>
-        </footer>
+        </section>
+    </main>
 
-    </div>
+    <footer class="bg-gray-900 text-white">
+        <div class="mx-auto max-w-7xl px-6 py-12">
+            <p class="text-center text-xs leading-5 text-gray-400">Â© {{ date('Y') }} Klinik Andin. All rights reserved.</p>
+        </div>
+    </footer>
+</div>
+
+<!-- Reveal-on-scroll (tanpa library, ringan, hormati prefers-reduced-motion) -->
+<script>
+(function(){
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const els = document.querySelectorAll('[data-reveal]');
+  els.forEach((el)=>{
+    el.style.opacity = 0;
+    el.style.transform = 'translateY(16px)';
+    el.style.transition = 'opacity .5s ease, transform .5s ease';
+    const d = parseInt(el.getAttribute('data-reveal-delay')||'0',10);
+    el.style.transitionDelay = (d/1000)+'s';
+  });
+  if(reduced){ els.forEach(el=>{ el.style.opacity=1; el.style.transform='none'; }); return; }
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.style.opacity = 1;
+        e.target.style.transform = 'none';
+        io.unobserve(e.target);
+      }
+    })
+  }, { threshold: .12 });
+  els.forEach(el=>io.observe(el));
+})();
+</script>
 </body>
-
 </html>
 
 ===== resources\views\profile\partials\delete-user-form.blade.php =====

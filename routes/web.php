@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DiagnosaController;
+use App\Http\Controllers\BackwardDiagnosaController;
 
 // ==========================================================
 // ===== REVISI PADA PEMANGGILAN CONTROLLER DI SINI =====
@@ -79,6 +80,17 @@ Route::middleware(['auth', 'verified', 'role:pengguna'])->prefix('diagnosa')->na
     Route::post('/', [DiagnosaController::class, 'process'])->name('process');
     Route::get('/hasil/{diagnosaHistory}', [DiagnosaController::class, 'hasil'])->name('hasil');
     Route::get('/riwayat', [DiagnosaController::class, 'riwayat'])->name('riwayat');
+});
+
+Route::middleware(['auth', 'verified', 'role:pengguna'])
+    ->prefix('diagnosa-mundur') // Menggunakan prefix 'diagnosa-mundur'
+    ->name('diagnosa-backward.')
+    ->group(function () {
+        Route::get('/', [BackwardDiagnosaController::class, 'index'])->name('index');
+        Route::post('/start', [BackwardDiagnosaController::class, 'start'])->name('start');
+        Route::get('/proses', [BackwardDiagnosaController::class, 'process'])->name('process');
+        Route::post('/jawab', [BackwardDiagnosaController::class, 'answer'])->name('answer');
+        Route::get('/hasil', [BackwardDiagnosaController::class, 'result'])->name('result');
 });
 
 require __DIR__ . '/auth.php';
