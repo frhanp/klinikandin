@@ -142,4 +142,22 @@ class DiagnosaController extends Controller
             ->paginate(10);
         return view('diagnosa.riwayat', compact('riwayat'));
     }
+
+    public function showRiwayat(DiagnosaHistory $diagnosaHistory)
+    {
+        // Pastikan pengguna hanya bisa melihat riwayatnya sendiri
+        if ($diagnosaHistory->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Ambil data dari riwayat yang tersimpan
+        $gejalaTerpilihIds = json_decode($diagnosaHistory->gejala_terpilih, true);
+        $penyakitTerbaikIds = json_decode($diagnosaHistory->penyakit_terbaik_lainnya, true) ?? [$diagnosaHistory->penyakit_id];
+
+        $gejalaTerpilih = Gejala::whereIn('id', $gejalaTerpilihIds)->get();
+        $penyakitTerbaik = Penyakit::whereIn('id', $penyakitTerbaikIds)->get();
+
+        // Kirim data ke view hasil yang sudah ada
+        return view('diagnosa.hasil', compact('penyakitTerbaik', 'gejalaTerpilih'));
+    }
 }

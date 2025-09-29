@@ -8,6 +8,7 @@ use App\Models\Penyakit;
 use App\Models\Gejala;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use App\Models\Rule;
 
 class RuleSeeder extends Seeder
 {
@@ -16,36 +17,29 @@ class RuleSeeder extends Seeder
      */
     public function run(): void
     {
-        Schema::disableForeignKeyConstraints();
-        DB::table('rules')->truncate();
-        Schema::enableForeignKeyConstraints();
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        Rule::truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-        // Ambil semua penyakit dan gejala
-        $penyakits = Penyakit::all()->keyBy('kode_penyakit');
-        $gejalas = Gejala::all()->keyBy('kode_gejala');
-
-        // Definisikan aturan: [Kode Penyakit => [Array Kode Gejala]]
+        // Format: [kode_penyakit, [kode_gejala_1, kode_gejala_2, ...]]
         $rules = [
-            'P01' => ['G01', 'G02', 'G03', 'G04'], // Osteoarthritis
-            'P02' => ['G05', 'G06', 'G07', 'G08'], // Osteoporosis
-            'P03' => ['G02', 'G03', 'G09', 'G10'], // Rheumatoid Arthritis
-            'P04' => ['G07', 'G11', 'G12'],       // Skoliosis
+            ['P01', ['G01', 'G02', 'G03', 'G04', 'G05', 'G06']],
+            ['P02', ['G07', 'G08', 'G09', 'G10', 'G11']],
+            ['P03', ['G12', 'G13', 'G14', 'G15', 'G16', 'G17']],
+            ['P04', ['G14', 'G18', 'G19', 'G20']],
+            ['P05', ['G21', 'G22', 'G02', 'G23', 'G03', 'G24']],
+            ['P06', ['G25', 'G26', 'G27', 'G28', 'G29', 'G30', 'G31', 'G32']],
         ];
 
-        foreach ($rules as $kode_penyakit => $kode_gejalas) {
-            if (!isset($penyakits[$kode_penyakit])) continue; // Lewati jika penyakit tidak ada
-            
-            $penyakit = $penyakits[$kode_penyakit];
-            
-            $gejalaIds = [];
-            foreach ($kode_gejalas as $kode_gejala) {
-                if (isset($gejalas[$kode_gejala])) {
-                    $gejalaIds[] = $gejalas[$kode_gejala]->id;
-                }
+        foreach ($rules as $rule) {
+            $penyakitId = \App\Models\Penyakit::where('kode_penyakit', $rule[0])->first()->id;
+            foreach ($rule[1] as $kodeGejala) {
+                $gejalaId = \App\Models\Gejala::where('kode_gejala', $kodeGejala)->first()->id;
+                Rule::create([
+                    'penyakit_id' => $penyakitId,
+                    'gejala_id' => $gejalaId,
+                ]);
             }
-            
-            // Gunakan attach() untuk menambahkan relasi di tabel pivot
-            $penyakit->gejalas()->attach($gejalaIds);
         }
     }
 }

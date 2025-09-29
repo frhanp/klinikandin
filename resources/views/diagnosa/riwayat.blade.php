@@ -1,4 +1,4 @@
-<x-app-layout>
+    <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             {{ __('Riwayat Diagnosa Saya') }}
@@ -23,8 +23,9 @@
                                     <tr>
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $item->created_at->format('d M Y, H:i') }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap font-medium">{{ $item->penyakit->nama_penyakit }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <a href="{{ route('diagnosa.hasil', $item->id) }}" class="text-indigo-600 hover:text-indigo-900 font-medium">
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            {{-- GANTI ROUTE DI SINI --}}
+                                            <a href="{{ route('diagnosa.riwayat.show', $item->id) }}" class="text-indigo-600 hover:text-indigo-900">
                                                 Lihat Detail
                                             </a>
                                         </td>

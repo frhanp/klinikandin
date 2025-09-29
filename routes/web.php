@@ -91,6 +91,7 @@ Route::middleware(['auth', 'verified', 'role:pengguna'])->prefix('diagnosa')->na
     Route::post('/jawab', [DiagnosaController::class, 'answer'])->name('answer');
     Route::get('/hasil', [DiagnosaController::class, 'result'])->name('result');
     Route::get('/riwayat', [DiagnosaController::class, 'riwayat'])->name('riwayat');
+    Route::get('/riwayat/{diagnosaHistory}', [DiagnosaController::class, 'showRiwayat'])->name('riwayat.show');
 });
 
 Route::middleware(['auth', 'verified', 'role:pengguna'])
