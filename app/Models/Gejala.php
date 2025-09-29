@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Gejala extends Model
 {
-    protected $fillable = ['kode_gejala', 'nama_gejala'];
+    protected $fillable = ['kode_gejala', 'nama_gejala', 'kategori'];
 
     // public function rules()
     // {
@@ -21,4 +21,6 @@ class Gejala extends Model
     {
         return $this->belongsToMany(Penyakit::class, 'rules', 'gejala_id', 'penyakit_id');
     }
+
+
 }

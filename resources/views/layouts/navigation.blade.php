@@ -63,7 +63,7 @@
         {{-- Navigasi Khusus Pengguna Biasa --}}
 
         @if (Auth::user()->role == 'pengguna')
-            <x-nav-link :href="route('diagnosa.index')" :active="request()->routeIs('diagnosa.index')">
+            <x-nav-link :href="route('diagnosa.start')" :active="request()->routeIs('diagnosa.start')">
                 {{ __('Mulai Diagnosa') }}
             </x-nav-link>
             <x-nav-link :href="route('diagnosa.riwayat')" :active="request()->routeIs('diagnosa.riwayat')">

@@ -1,5 +1,5 @@
 ﻿# Project Digest (Full Content)
-_Generated: 2025-09-17 12:25:10_
+_Generated: 2025-09-29 21:15:42_
 **Root:** D:\Laragon\www\klinikandin
 
 
@@ -31,6 +31,7 @@ package.json
 phpunit.xml
 postcss.config.js
 project_digest_full.md
+project_summary.md
 README.md
 tailwind.config.js
 vite.config.js
@@ -45,6 +46,7 @@ app\Http\Controllers\Admin
 app\Http\Controllers\Auth
 app\Http\Controllers\Dokter
 app\Http\Controllers\User
+app\Http\Controllers\BackwardDiagnosaController.php
 app\Http\Controllers\Controller.php
 app\Http\Controllers\DiagnosaController.php
 app\Http\Controllers\HomeController.php
@@ -108,17 +110,24 @@ database\migrations\2025_06_28_140422_create_penyakits_table.php
 database\migrations\2025_06_28_140424_create_rules_table.php
 database\migrations\2025_06_28_150106_create_diagnosa_histories_table.php
 database\migrations\2025_09_01_151444_update_penyakits_table_for_solutions.php
+database\migrations\2025_09_29_125812_add_kategori_to_gejalas_table.php
 database\seeders\DatabaseSeeder.php
 database\seeders\GejalaSeeder.php
 database\seeders\PenyakitSeeder.php
 database\seeders\RuleSeeder.php
 database\seeders\UserRoleSeeder.php
 public\build
+public\images
+public\storage
 public\.htaccess
 public\favicon.ico
 public\hot
 public\index.php
 public\robots.txt
+public\images\doctors
+public\images\tulang.jpg
+public\images\doctors\drirawan.png
+public\images\doctors\drirma.png
 resources\css
 resources\js
 resources\views
@@ -129,6 +138,7 @@ resources\views\admin
 resources\views\auth
 resources\views\components
 resources\views\diagnosa
+resources\views\diagnosa-backward
 resources\views\dokter
 resources\views\layouts
 resources\views\pages
@@ -173,6 +183,10 @@ resources\views\components\text-input.blade.php
 resources\views\diagnosa\hasil.blade.php
 resources\views\diagnosa\index.blade.php
 resources\views\diagnosa\riwayat.blade.php
+resources\views\diagnosa\select.blade.php
+resources\views\diagnosa-backward\hasil.blade.php
+resources\views\diagnosa-backward\index.blade.php
+resources\views\diagnosa-backward\process.blade.php
 resources\views\dokter\dashboard.blade.php
 resources\views\layouts\app.blade.php
 resources\views\layouts\guest.blade.php
@@ -207,6 +221,7 @@ storage\framework\sessions\.gitignore
 storage\framework\testing\.gitignore
 storage\framework\views\.gitignore
 storage\framework\views\08170422efbc6844d902adfdec948f66.php
+storage\framework\views\0aa168f9c90ec03b52a561fc26e67def.php
 storage\framework\views\0acd9b82810f9c67b7babdb310a11f8e.php
 storage\framework\views\0c42d7137be0603e1fc772b02f194211.php
 storage\framework\views\0c9d480842e68a02e7709367b1f6b419.php
@@ -231,6 +246,7 @@ storage\framework\views\4c7cd5280930a55473db41967d23159a.php
 storage\framework\views\4faff72139c4909302ae5b99f62eccbf.php
 storage\framework\views\542b03662a77ff5aff8887b0808da031.php
 storage\framework\views\54f17061d70650b7d2b9cb5ae6628143.php
+storage\framework\views\552c7af6611f3963bf6ea23b12a89d64.php
 storage\framework\views\5fa187679e71ac95f6d7a5aeaf410718.php
 storage\framework\views\6427d900e2be87da62f0f8107aedd515.php
 storage\framework\views\69ecc658ea70cfa4b62f3788985c5933.php
@@ -238,6 +254,7 @@ storage\framework\views\6a0ba22252fc0fdb2990553e6e7b5d79.php
 storage\framework\views\6c6826cfa5c18281152fbe56cd6ff88e.php
 storage\framework\views\899084c187ed77f2461d6930d359fcd4.php
 storage\framework\views\8b6402ff1849aef6ae5a62b52a22734b.php
+storage\framework\views\90fe2da24e2118204aed9e5b8ade7dff.php
 storage\framework\views\9ca6c9b36058199e336d730d27a87fce.php
 storage\framework\views\b56843ce51385fdf12b8e632a98049f0.php
 storage\framework\views\b66d67d0023f0b8e7dd722a80dd1802d.php
@@ -245,6 +262,7 @@ storage\framework\views\bdea1b8ed75254a5bd408d48a89d67ab.php
 storage\framework\views\c0f17148c7775688ed5f6038dd93a5f3.php
 storage\framework\views\d397bc38c568178fa52a32e07acf01a1.php
 storage\framework\views\d40421f68651eed2b7a462e5dce29eb4.php
+storage\framework\views\d84e506498108dd17f52d530e14e64b4.php
 storage\framework\views\d995df5a49c8feaa16187ab160da273f.php
 storage\framework\views\d9c3926c414ed81111ab4f58355489e7.php
 storage\framework\views\dd901bab0ef8695061e31a100eb18925.php
@@ -283,11 +301,11 @@ Branch:
 main
 
 Last 5 commits:
+34f8324 backward chaining
 7c968ee edit kontak
 c89696d ubah hak akses kedua kalinya
 0d5a617 add dokter dan revisian lainnya
 26cb2dc susun hak akses dan dashboard dokter
-9690027 perbaiki tampilan diagnosa
 ```
 
 
@@ -388,6 +406,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DiagnosaController;
+use App\Http\Controllers\BackwardDiagnosaController;
 
 // ==========================================================
 // ===== REVISI PADA PEMANGGILAN CONTROLLER DI SINI =====
@@ -460,6 +479,19 @@ Route::middleware(['auth', 'verified', 'role:pengguna'])->prefix('diagnosa')->na
     Route::post('/', [DiagnosaController::class, 'process'])->name('process');
     Route::get('/hasil/{diagnosaHistory}', [DiagnosaController::class, 'hasil'])->name('hasil');
     Route::get('/riwayat', [DiagnosaController::class, 'riwayat'])->name('riwayat');
+
+    Route::post('/pilih-gejala', [DiagnosaController::class, 'selectSymptoms'])->name('pilih-gejala');
+});
+
+Route::middleware(['auth', 'verified', 'role:pengguna'])
+    ->prefix('diagnosa-mundur') // Menggunakan prefix 'diagnosa-mundur'
+    ->name('diagnosa-backward.')
+    ->group(function () {
+        Route::get('/', [BackwardDiagnosaController::class, 'index'])->name('index');
+        Route::post('/start', [BackwardDiagnosaController::class, 'start'])->name('start');
+        Route::get('/proses', [BackwardDiagnosaController::class, 'process'])->name('process');
+        Route::post('/jawab', [BackwardDiagnosaController::class, 'answer'])->name('answer');
+        Route::get('/hasil', [BackwardDiagnosaController::class, 'result'])->name('result');
 });
 
 require __DIR__ . '/auth.php';
@@ -470,76 +502,82 @@ require __DIR__ . '/auth.php';
 ## Routes (from command)
 ```
 
-  GET|HEAD        / ......................................................................................................................... home
-  GET|HEAD        _debugbar/assets/javascript ........................................ debugbar.assets.js ΓÇ║ Barryvdh\Debugbar ΓÇ║ AssetController@js
-  GET|HEAD        _debugbar/assets/stylesheets ..................................... debugbar.assets.css ΓÇ║ Barryvdh\Debugbar ΓÇ║ AssetController@css
-  DELETE          _debugbar/cache/{key}/{tags?} ............................... debugbar.cache.delete ΓÇ║ Barryvdh\Debugbar ΓÇ║ CacheController@delete
-  GET|HEAD        _debugbar/clockwork/{id} .............................. debugbar.clockwork ΓÇ║ Barryvdh\Debugbar ΓÇ║ OpenHandlerController@clockwork
-  GET|HEAD        _debugbar/open ......................................... debugbar.openhandler ΓÇ║ Barryvdh\Debugbar ΓÇ║ OpenHandlerController@handle
-  POST            _debugbar/queries/explain ............................. debugbar.queries.explain ΓÇ║ Barryvdh\Debugbar ΓÇ║ QueriesController@explain
-  GET|HEAD        admin/dashboard .................................................................... admin.dashboard ΓÇ║ Admin\DashboardController
-  GET|HEAD        admin/dokter ................................................................. admin.dokter.index ΓÇ║ Admin\DokterController@index
-  POST            admin/dokter ................................................................. admin.dokter.store ΓÇ║ Admin\DokterController@store
-  GET|HEAD        admin/dokter/create ........................................................ admin.dokter.create ΓÇ║ Admin\DokterController@create
-  PUT|PATCH       admin/dokter/{dokter} ...................................................... admin.dokter.update ΓÇ║ Admin\DokterController@update
-  DELETE          admin/dokter/{dokter} .................................................... admin.dokter.destroy ΓÇ║ Admin\DokterController@destroy
-  GET|HEAD        admin/dokter/{dokter}/edit ..................................................... admin.dokter.edit ΓÇ║ Admin\DokterController@edit
-  GET|HEAD        admin/gejala ................................................................. admin.gejala.index ΓÇ║ Admin\GejalaController@index
-  POST            admin/gejala ................................................................. admin.gejala.store ΓÇ║ Admin\GejalaController@store
-  GET|HEAD        admin/gejala/create ........................................................ admin.gejala.create ΓÇ║ Admin\GejalaController@create
-  PUT|PATCH       admin/gejala/{gejala} ...................................................... admin.gejala.update ΓÇ║ Admin\GejalaController@update
-  DELETE          admin/gejala/{gejala} .................................................... admin.gejala.destroy ΓÇ║ Admin\GejalaController@destroy
-  GET|HEAD        admin/gejala/{gejala}/edit ..................................................... admin.gejala.edit ΓÇ║ Admin\GejalaController@edit
-  GET|HEAD        admin/penyakit ........................................................... admin.penyakit.index ΓÇ║ Admin\PenyakitController@index
-  POST            admin/penyakit ........................................................... admin.penyakit.store ΓÇ║ Admin\PenyakitController@store
-  GET|HEAD        admin/penyakit/create .................................................. admin.penyakit.create ΓÇ║ Admin\PenyakitController@create
-  PUT|PATCH       admin/penyakit/{penyakit} .............................................. admin.penyakit.update ΓÇ║ Admin\PenyakitController@update
-  DELETE          admin/penyakit/{penyakit} ............................................ admin.penyakit.destroy ΓÇ║ Admin\PenyakitController@destroy
-  GET|HEAD        admin/penyakit/{penyakit}/edit ............................................. admin.penyakit.edit ΓÇ║ Admin\PenyakitController@edit
-  GET|HEAD        confirm-password .................................................... password.confirm ΓÇ║ Auth\ConfirmablePasswordController@show
-  POST            confirm-password ...................................................................... Auth\ConfirmablePasswordController@store
-  GET|HEAD        dashboard ............................................................................................................ dashboard
-  GET|HEAD        diagnosa ............................................................................. diagnosa.index ΓÇ║ DiagnosaController@index
-  POST            diagnosa ......................................................................... diagnosa.process ΓÇ║ DiagnosaController@process
-  GET|HEAD        diagnosa/hasil/{diagnosaHistory} ..................................................... diagnosa.hasil ΓÇ║ DiagnosaController@hasil
-  GET|HEAD        diagnosa/riwayat ................................................................. diagnosa.riwayat ΓÇ║ DiagnosaController@riwayat
-  GET|HEAD        dokter/dashboard ........................................................... dokter.dashboard ΓÇ║ Dokter\DashboardController@index
-  GET|HEAD        dokter/gejala ............................................................... dokter.gejala.index ΓÇ║ Admin\GejalaController@index
-  POST            dokter/gejala ............................................................... dokter.gejala.store ΓÇ║ Admin\GejalaController@store
-  GET|HEAD        dokter/gejala/create ...................................................... dokter.gejala.create ΓÇ║ Admin\GejalaController@create
-  PUT|PATCH       dokter/gejala/{gejala} .................................................... dokter.gejala.update ΓÇ║ Admin\GejalaController@update
-  DELETE          dokter/gejala/{gejala} .................................................. dokter.gejala.destroy ΓÇ║ Admin\GejalaController@destroy
-  GET|HEAD        dokter/gejala/{gejala}/edit ................................................... dokter.gejala.edit ΓÇ║ Admin\GejalaController@edit
-  GET|HEAD        dokter/penyakit ......................................................... dokter.penyakit.index ΓÇ║ Admin\PenyakitController@index
-  POST            dokter/penyakit ......................................................... dokter.penyakit.store ΓÇ║ Admin\PenyakitController@store
-  GET|HEAD        dokter/penyakit/create ................................................ dokter.penyakit.create ΓÇ║ Admin\PenyakitController@create
-  PUT|PATCH       dokter/penyakit/{penyakit} ............................................ dokter.penyakit.update ΓÇ║ Admin\PenyakitController@update
-  DELETE          dokter/penyakit/{penyakit} .......................................... dokter.penyakit.destroy ΓÇ║ Admin\PenyakitController@destroy
-  GET|HEAD        dokter/penyakit/{penyakit}/edit ........................................... dokter.penyakit.edit ΓÇ║ Admin\PenyakitController@edit
-  GET|HEAD        dokter/rule .................................................................... dokter.rule.index ΓÇ║ Dokter\RuleController@index
-  PUT             dokter/rule/{penyakit} ....................................................... dokter.rule.update ΓÇ║ Dokter\RuleController@update
-  GET|HEAD        dokter/rule/{penyakit}/edit ...................................................... dokter.rule.edit ΓÇ║ Dokter\RuleController@edit
-  POST            email/verification-notification ......................... verification.send ΓÇ║ Auth\EmailVerificationNotificationController@store
-  GET|HEAD        forgot-password ..................................................... password.request ΓÇ║ Auth\PasswordResetLinkController@create
-  POST            forgot-password ........................................................ password.email ΓÇ║ Auth\PasswordResetLinkController@store
-  GET|HEAD        kontak .......................................................................................... kontak ΓÇ║ HomeController@kontak
-  GET|HEAD        login ....................................................................... login ΓÇ║ Auth\AuthenticatedSessionController@create
-  POST            login ................................................................................ Auth\AuthenticatedSessionController@store
-  POST            logout .................................................................... logout ΓÇ║ Auth\AuthenticatedSessionController@destroy
-  PUT             password ...................................................................... password.update ΓÇ║ Auth\PasswordController@update
-  GET|HEAD        profile .................................................................................. profile.edit ΓÇ║ ProfileController@edit
-  PATCH           profile .............................................................................. profile.update ΓÇ║ ProfileController@update
-  DELETE          profile ............................................................................ profile.destroy ΓÇ║ ProfileController@destroy
-  GET|HEAD        register ....................................................................... register ΓÇ║ Auth\RegisteredUserController@create
-  POST            register ................................................................................... Auth\RegisteredUserController@store
-  POST            reset-password ............................................................... password.store ΓÇ║ Auth\NewPasswordController@store
-  GET|HEAD        reset-password/{token} ...................................................... password.reset ΓÇ║ Auth\NewPasswordController@create
-  GET|HEAD        storage/{path} ................................................................................................... storage.local
-  GET|HEAD        up ............................................................................................................................. 
-  GET|HEAD        verify-email ...................................................... verification.notice ΓÇ║ Auth\EmailVerificationPromptController
-  GET|HEAD        verify-email/{id}/{hash} ...................................................... verification.verify ΓÇ║ Auth\VerifyEmailController
+  GET|HEAD        / ........................................................................................................ home
+  GET|HEAD        _debugbar/assets/javascript ....................... debugbar.assets.js ΓÇ║ Barryvdh\Debugbar ΓÇ║ AssetController@js
+  GET|HEAD        _debugbar/assets/stylesheets .................... debugbar.assets.css ΓÇ║ Barryvdh\Debugbar ΓÇ║ AssetController@css
+  DELETE          _debugbar/cache/{key}/{tags?} .............. debugbar.cache.delete ΓÇ║ Barryvdh\Debugbar ΓÇ║ CacheController@delete
+  GET|HEAD        _debugbar/clockwork/{id} ............. debugbar.clockwork ΓÇ║ Barryvdh\Debugbar ΓÇ║ OpenHandlerController@clockwork
+  GET|HEAD        _debugbar/open ........................ debugbar.openhandler ΓÇ║ Barryvdh\Debugbar ΓÇ║ OpenHandlerController@handle
+  POST            _debugbar/queries/explain ............ debugbar.queries.explain ΓÇ║ Barryvdh\Debugbar ΓÇ║ QueriesController@explain
+  GET|HEAD        admin/dashboard ................................................... admin.dashboard ΓÇ║ Admin\DashboardController
+  GET|HEAD        admin/dokter ................................................ admin.dokter.index ΓÇ║ Admin\DokterController@index
+  POST            admin/dokter ................................................ admin.dokter.store ΓÇ║ Admin\DokterController@store
+  GET|HEAD        admin/dokter/create ....................................... admin.dokter.create ΓÇ║ Admin\DokterController@create
+  PUT|PATCH       admin/dokter/{dokter} ..................................... admin.dokter.update ΓÇ║ Admin\DokterController@update
+  DELETE          admin/dokter/{dokter} ................................... admin.dokter.destroy ΓÇ║ Admin\DokterController@destroy
+  GET|HEAD        admin/dokter/{dokter}/edit .................................... admin.dokter.edit ΓÇ║ Admin\DokterController@edit
+  GET|HEAD        admin/gejala ................................................ admin.gejala.index ΓÇ║ Admin\GejalaController@index
+  POST            admin/gejala ................................................ admin.gejala.store ΓÇ║ Admin\GejalaController@store
+  GET|HEAD        admin/gejala/create ....................................... admin.gejala.create ΓÇ║ Admin\GejalaController@create
+  PUT|PATCH       admin/gejala/{gejala} ..................................... admin.gejala.update ΓÇ║ Admin\GejalaController@update
+  DELETE          admin/gejala/{gejala} ................................... admin.gejala.destroy ΓÇ║ Admin\GejalaController@destroy
+  GET|HEAD        admin/gejala/{gejala}/edit .................................... admin.gejala.edit ΓÇ║ Admin\GejalaController@edit
+  GET|HEAD        admin/penyakit .......................................... admin.penyakit.index ΓÇ║ Admin\PenyakitController@index
+  POST            admin/penyakit .......................................... admin.penyakit.store ΓÇ║ Admin\PenyakitController@store
+  GET|HEAD        admin/penyakit/create ................................. admin.penyakit.create ΓÇ║ Admin\PenyakitController@create
+  PUT|PATCH       admin/penyakit/{penyakit} ............................. admin.penyakit.update ΓÇ║ Admin\PenyakitController@update
+  DELETE          admin/penyakit/{penyakit} ........................... admin.penyakit.destroy ΓÇ║ Admin\PenyakitController@destroy
+  GET|HEAD        admin/penyakit/{penyakit}/edit ............................ admin.penyakit.edit ΓÇ║ Admin\PenyakitController@edit
+  GET|HEAD        confirm-password ................................... password.confirm ΓÇ║ Auth\ConfirmablePasswordController@show
+  POST            confirm-password ..................................................... Auth\ConfirmablePasswordController@store
+  GET|HEAD        dashboard ........................................................................................... dashboard
+  GET|HEAD        diagnosa ............................................................ diagnosa.index ΓÇ║ DiagnosaController@index
+  POST            diagnosa ........................................................ diagnosa.process ΓÇ║ DiagnosaController@process
+  GET|HEAD        diagnosa-mundur .................................... diagnosa-backward.index ΓÇ║ BackwardDiagnosaController@index
+  GET|HEAD        diagnosa-mundur/hasil ............................ diagnosa-backward.result ΓÇ║ BackwardDiagnosaController@result
+  POST            diagnosa-mundur/jawab ............................ diagnosa-backward.answer ΓÇ║ BackwardDiagnosaController@answer
+  GET|HEAD        diagnosa-mundur/proses ......................... diagnosa-backward.process ΓÇ║ BackwardDiagnosaController@process
+  POST            diagnosa-mundur/start .............................. diagnosa-backward.start ΓÇ║ BackwardDiagnosaController@start
+  GET|HEAD        diagnosa/hasil/{diagnosaHistory} .................................... diagnosa.hasil ΓÇ║ DiagnosaController@hasil
+  POST            diagnosa/pilih-gejala ............................... diagnosa.pilih-gejala ΓÇ║ DiagnosaController@selectSymptoms
+  GET|HEAD        diagnosa/riwayat ................................................ diagnosa.riwayat ΓÇ║ DiagnosaController@riwayat
+  GET|HEAD        dokter/dashboard .......................................... dokter.dashboard ΓÇ║ Dokter\DashboardController@index
+  GET|HEAD        dokter/gejala .............................................. dokter.gejala.index ΓÇ║ Admin\GejalaController@index
+  POST            dokter/gejala .............................................. dokter.gejala.store ΓÇ║ Admin\GejalaController@store
+  GET|HEAD        dokter/gejala/create ..................................... dokter.gejala.create ΓÇ║ Admin\GejalaController@create
+  PUT|PATCH       dokter/gejala/{gejala} ................................... dokter.gejala.update ΓÇ║ Admin\GejalaController@update
+  DELETE          dokter/gejala/{gejala} ................................. dokter.gejala.destroy ΓÇ║ Admin\GejalaController@destroy
+  GET|HEAD        dokter/gejala/{gejala}/edit .................................. dokter.gejala.edit ΓÇ║ Admin\GejalaController@edit
+  GET|HEAD        dokter/penyakit ........................................ dokter.penyakit.index ΓÇ║ Admin\PenyakitController@index
+  POST            dokter/penyakit ........................................ dokter.penyakit.store ΓÇ║ Admin\PenyakitController@store
+  GET|HEAD        dokter/penyakit/create ............................... dokter.penyakit.create ΓÇ║ Admin\PenyakitController@create
+  PUT|PATCH       dokter/penyakit/{penyakit} ........................... dokter.penyakit.update ΓÇ║ Admin\PenyakitController@update
+  DELETE          dokter/penyakit/{penyakit} ......................... dokter.penyakit.destroy ΓÇ║ Admin\PenyakitController@destroy
+  GET|HEAD        dokter/penyakit/{penyakit}/edit .......................... dokter.penyakit.edit ΓÇ║ Admin\PenyakitController@edit
+  GET|HEAD        dokter/rule ................................................... dokter.rule.index ΓÇ║ Dokter\RuleController@index
+  PUT             dokter/rule/{penyakit} ...................................... dokter.rule.update ΓÇ║ Dokter\RuleController@update
+  GET|HEAD        dokter/rule/{penyakit}/edit ..................................... dokter.rule.edit ΓÇ║ Dokter\RuleController@edit
+  POST            email/verification-notification ........ verification.send ΓÇ║ Auth\EmailVerificationNotificationController@store
+  GET|HEAD        forgot-password .................................... password.request ΓÇ║ Auth\PasswordResetLinkController@create
+  POST            forgot-password ....................................... password.email ΓÇ║ Auth\PasswordResetLinkController@store
+  GET|HEAD        kontak ......................................................................... kontak ΓÇ║ HomeController@kontak
+  GET|HEAD        login ...................................................... login ΓÇ║ Auth\AuthenticatedSessionController@create
+  POST            login ............................................................... Auth\AuthenticatedSessionController@store
+  POST            logout ................................................... logout ΓÇ║ Auth\AuthenticatedSessionController@destroy
+  PUT             password ..................................................... password.update ΓÇ║ Auth\PasswordController@update
+  GET|HEAD        profile ................................................................. profile.edit ΓÇ║ ProfileController@edit
+  PATCH           profile ............................................................. profile.update ΓÇ║ ProfileController@update
+  DELETE          profile ........................................................... profile.destroy ΓÇ║ ProfileController@destroy
+  GET|HEAD        register ...................................................... register ΓÇ║ Auth\RegisteredUserController@create
+  POST            register .................................................................. Auth\RegisteredUserController@store
+  POST            reset-password .............................................. password.store ΓÇ║ Auth\NewPasswordController@store
+  GET|HEAD        reset-password/{token} ..................................... password.reset ΓÇ║ Auth\NewPasswordController@create
+  GET|HEAD        storage/{path} .................................................................................. storage.local
+  GET|HEAD        up ............................................................................................................ 
+  GET|HEAD        verify-email ..................................... verification.notice ΓÇ║ Auth\EmailVerificationPromptController
+  GET|HEAD        verify-email/{id}/{hash} ..................................... verification.verify ΓÇ║ Auth\VerifyEmailController
 
-                                                                                                                               Showing [68] routes
+                                                                                                              Showing [74] routes
 
 ```
 
@@ -713,6 +751,7 @@ class GejalaController extends Controller
         $request->validate([
             'kode_gejala' => 'required|string|unique:gejalas,kode_gejala|max:10',
             'nama_gejala' => 'required|string|max:255',
+            'kategori' => 'required|string|max:255',
         ]);
 
         Gejala::create($request->all());
@@ -737,6 +776,7 @@ class GejalaController extends Controller
         $request->validate([
             'kode_gejala' => 'required|string|max:10|unique:gejalas,kode_gejala,' . $gejala->id,
             'nama_gejala' => 'required|string|max:255',
+            'kategori' => 'required|string|max:255',
         ]);
 
         $gejala->update($request->all());
@@ -1352,6 +1392,151 @@ class DashboardController extends Controller
     }
 }
 
+===== app\Http\Controllers\BackwardDiagnosaController.php =====
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Penyakit;
+use App\Models\Gejala;
+use Illuminate\Support\Facades\Auth;
+use App\Models\DiagnosaHistory;
+
+class BackwardDiagnosaController extends Controller
+{
+     /**
+     * Menampilkan halaman awal untuk memilih penyakit (hipotesis).
+     */
+    public function index()
+    {
+        $penyakits = Penyakit::orderBy('nama_penyakit')->get();
+        return view('diagnosa-backward.index', compact('penyakits'));
+    }
+
+    /**
+     * Memulai proses backward chaining.
+     * Menerima penyakit yang dipilih dan menyiapkan sesi diagnosa.
+     */
+    public function start(Request $request)
+    {
+        $request->validate(['penyakit_id' => 'required|exists:penyakits,id']);
+
+        $penyakit = Penyakit::with('gejalas')->findOrFail($request->penyakit_id);
+        $gejalaIds = $penyakit->gejalas->pluck('id')->toArray();
+
+        // Jika penyakit tidak memiliki gejala sama sekali
+        if (empty($gejalaIds)) {
+            return redirect()->route('diagnosa-backward.index')->with('error', 'Penyakit yang dipilih tidak memiliki gejala terkait di dalam basis aturan.');
+        }
+        
+        // Simpan state diagnosa di session
+        session([
+            'backward_diagnosa' => [
+                'penyakit_id' => $penyakit->id,
+                'gejala_ids' => $gejalaIds,
+                'current_gejala_index' => 0,
+                'jawaban_gejala' => [], // Untuk menyimpan jawaban 'ya'
+            ]
+        ]);
+
+        return redirect()->route('diagnosa-backward.process');
+    }
+
+    /**
+     * Menampilkan pertanyaan gejala satu per satu.
+     */
+    public function process()
+    {
+        $diagnosaData = session('backward_diagnosa');
+
+        // Jika sesi tidak ada, kembalikan ke awal
+        if (!$diagnosaData) {
+            return redirect()->route('diagnosa-backward.index');
+        }
+
+        $gejalaIndex = $diagnosaData['current_gejala_index'];
+        $gejalaIds = $diagnosaData['gejala_ids'];
+
+        // Jika semua gejala sudah ditanyakan, hitung hasilnya
+        if ($gejalaIndex >= count($gejalaIds)) {
+            return redirect()->route('diagnosa-backward.result');
+        }
+
+        // Ambil gejala saat ini untuk ditanyakan
+        $currentGejalaId = $gejalaIds[$gejalaIndex];
+        $gejala = \App\Models\Gejala::find($currentGejalaId);
+        $penyakit = Penyakit::find($diagnosaData['penyakit_id']);
+        $progress = round((($gejalaIndex + 1) / count($gejalaIds)) * 100);
+
+        return view('diagnosa-backward.process', compact('gejala', 'penyakit', 'progress'));
+    }
+
+    /**
+     * Menyimpan jawaban dari pengguna dan lanjut ke gejala berikutnya.
+     */
+    public function answer(Request $request)
+    {
+        $request->validate(['jawaban' => 'required|in:ya,tidak']);
+
+        $diagnosaData = session('backward_diagnosa');
+        if (!$diagnosaData) {
+            return redirect()->route('diagnosa-backward.index');
+        }
+
+        // Simpan jawaban jika 'ya'
+        if ($request->jawaban == 'ya') {
+            $currentGejalaId = $diagnosaData['gejala_ids'][$diagnosaData['current_gejala_index']];
+            $diagnosaData['jawaban_gejala'][] = $currentGejalaId;
+        }
+
+        // Lanjut ke gejala berikutnya
+        $diagnosaData['current_gejala_index']++;
+        session(['backward_diagnosa' => $diagnosaData]);
+
+        return redirect()->route('diagnosa-backward.process');
+    }
+
+    /**
+     * Menampilkan hasil akhir dari proses backward chaining.
+     */
+    /**
+     * Menampilkan hasil akhir dari proses backward chaining.
+     */
+    public function result()
+    {
+        $diagnosaData = session('backward_diagnosa');
+        if (!$diagnosaData) {
+            return redirect()->route('diagnosa-backward.index');
+        }
+
+        $penyakit = Penyakit::findOrFail($diagnosaData['penyakit_id']);
+        $totalGejalaPenyakit = count($diagnosaData['gejala_ids']);
+        $gejalaCocokIds = $diagnosaData['jawaban_gejala'];
+        $gejalaCocokCount = count($gejalaCocokIds);
+        
+        // Ambil data model Gejala berdasarkan ID yang dijawab "ya"
+        $gejalaTerpilih = \App\Models\Gejala::whereIn('id', $gejalaCocokIds)->get();
+
+        $skor = ($totalGejalaPenyakit > 0) ? ($gejalaCocokCount / $totalGejalaPenyakit) * 100 : 0;
+        $terbukti = $skor > 60;
+
+        if ($terbukti) {
+            DiagnosaHistory::create([
+                'user_id' => Auth::id(),
+                'penyakit_id' => $penyakit->id,
+                'gejala_terpilih' => json_encode($gejalaCocokIds),
+                'hasil_skor' => $skor,
+            ]);
+        }
+
+        session()->forget('backward_diagnosa');
+
+        // Kirim semua data yang diperlukan ke view
+        return view('diagnosa-backward.hasil', compact('penyakit', 'terbukti', 'skor', 'gejalaTerpilih'));
+    }
+}
+
 ===== app\Http\Controllers\Controller.php =====
 <?php
 
@@ -1377,10 +1562,22 @@ class DiagnosaController extends Controller
 {
     public function index()
     {
-        $gejalas = Gejala::all();
-        return view('diagnosa.index', compact('gejalas'));
+        // Ambil semua kategori unik dari database
+        $kategoris = Gejala::select('kategori')->distinct()->pluck('kategori');
+        return view('diagnosa.index', compact('kategoris'));
     }
 
+    // LANGKAH 2: TAMPILKAN GEJALA BERDASARKAN KATEGORI YANG DIPILIH
+    public function selectSymptoms(Request $request)
+    {
+        $request->validate(['kategori' => 'required|string']);
+        $kategori = $request->kategori;
+        $gejalas = Gejala::where('kategori', $kategori)->get();
+
+        return view('diagnosa.select', compact('gejalas', 'kategori'));
+    }
+
+    // LANGKAH 3: PROSES DIAGNOSA (Logika inti tetap sama)
     public function process(Request $request)
     {
         $request->validate([
@@ -1390,10 +1587,11 @@ class DiagnosaController extends Controller
         ]);
 
         $gejala_ids = $request->input('gejala_ids', []);
-
+        
         if (count($gejala_ids) > 10) {
             return redirect()->back()->with('error', 'Anda memilih terlalu banyak gejala. Mohon pilih hanya gejala yang paling relevan (maksimal 10).');
         }
+
         $penyakits = Penyakit::with('gejalas')->get();
         $matches = [];
 
@@ -1412,21 +1610,21 @@ class DiagnosaController extends Controller
             }
         }
 
-        if (!empty($matches)) {
-            usort($matches, fn($a, $b) => $b['skor'] <=> $a['skor']);
-            $bestMatch = $matches[0];
-
-            $diagnosaHistory = DiagnosaHistory::create([
-                'user_id' => Auth::id(),
-                'penyakit_id' => $bestMatch['penyakit']->id,
-                'gejala_terpilih' => json_encode($gejala_ids),
-                'hasil_skor' => $bestMatch['skor'] * 100, // <--- KODE SUDAH DIPERBAIKI
-            ]);
-
-            return redirect()->route('diagnosa.hasil', $diagnosaHistory->id);
-        } else {
+        if (empty($matches)) {
             return redirect()->route('diagnosa.index')->with('error', 'Tidak ditemukan penyakit yang sesuai dengan gejala yang Anda pilih.');
         }
+
+        usort($matches, fn($a, $b) => $b['skor'] <=> $a['skor']);
+        $bestMatch = $matches[0];
+
+        $diagnosaHistory = DiagnosaHistory::create([
+            'user_id' => auth()->id(),
+            'penyakit_id' => $bestMatch['penyakit']->id,
+            'gejala_terpilih' => json_encode($gejala_ids),
+            'hasil_skor' => $bestMatch['skor'] * 100,
+        ]);
+
+        return redirect()->route('diagnosa.hasil', $diagnosaHistory->id);
     }
 
     public function hasil(DiagnosaHistory $diagnosaHistory)
@@ -1472,19 +1670,19 @@ class HomeController extends Controller
                 'nama_dokter' => 'Dr. Irma Suryani Darise, Sp.OT. Subsp. OTB(K)',
                 'tempat_praktek' => 'Apotek INSYIRAH',
                 'map_url' => 'https://maps.app.goo.gl/Lw3G6GnJX6e6r6XF7?g_st=aw',
-                'foto' => 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=2070&auto=format&fit=crop'
+                'foto' => asset('images/doctors/drirma.png') 
             ],
             [
                 'nama_dokter' => 'Dr. Chairul Wahjudi, M.Kes, Sp.OT(K) Hip&Knee',
                 'tempat_praktek' => 'Klinik Pratama Mulia',
                 'map_url' => 'https://maps.app.goo.gl/i34n2JoStnra6e7GA?g_st=aw',
-                'foto' => 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=2070&auto=format&fit=crop'
+                'foto' => "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor' class='w-6 h-6'%3E%3Cpath fill-rule='evenodd' d='M18.685 19.097A9.723 9.723 0 0 0 21.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 0 0 3.065 7.097A9.716 9.716 0 0 0 12 21.75a9.716 9.716 0 0 0 6.685-2.653Zm-12.54-1.285A7.486 7.486 0 0 1 12 15a7.486 7.486 0 0 1 5.855 2.812A8.224 8.224 0 0 1 12 20.25a8.224 8.224 0 0 1-5.855-2.438ZM15.75 9a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z' clip-rule='evenodd' /%3E%3C/svg%3E"
             ],
             [
                 'nama_dokter' => 'Dr. Irawan Huntoyungo, M.Kes, Sp.OT',
                 'tempat_praktek' => 'APOTEK ORTHOMEDIKA',
                 'map_url' => 'https://maps.app.goo.gl/Gq9mAp8HyzwpVrJG8?g_st=aw',
-                'foto' => 'https://images.unsplash.com/photo-1537368910025-700350796527?q=80&w=2070&auto=format&fit=crop'
+                'foto' => asset('images/doctors/drirawan.png')
             ],
         ];
 
@@ -1610,7 +1808,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Gejala extends Model
 {
-    protected $fillable = ['kode_gejala', 'nama_gejala'];
+    protected $fillable = ['kode_gejala', 'nama_gejala', 'kategori'];
 
     // public function rules()
     // {
@@ -1624,6 +1822,8 @@ class Gejala extends Model
     {
         return $this->belongsToMany(Penyakit::class, 'rules', 'gejala_id', 'penyakit_id');
     }
+
+
 }
 
 ===== app\Models\Penyakit.php =====
@@ -1861,6 +2061,14 @@ class Rule extends Model
                                 <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
                             @enderror
                         </div>
+                        <div class="mb-4">
+                            <label for="kategori" class="block font-medium text-sm text-gray-700">Kategori Gejala</label>
+                            <input type="text" name="kategori" id="kategori" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 ..." value="{{ old('kategori') }}" required>
+                            <p class="text-xs text-gray-500 mt-1">Contoh: Tulang Belakang, Sendi, Lutut, Gejala Umum.</p>
+                            @error('kategori')
+                                <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
+                            @enderror
+                        </div>
                         <div class="flex items-center justify-end mt-4">
                             <a href="{{ route($rolePrefix . '.gejala.index') }}" class="text-sm text-gray-600 hover:text-gray-900 mr-4">Batal</a>
                             <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Simpan</button>
@@ -1903,6 +2111,14 @@ class Rule extends Model
                                 class="block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                                 value="{{ old('nama_gejala', $gejala->nama_gejala) }}" required>
                             @error('nama_gejala')
+                                <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div class="mb-4">
+                            <label for="kategori" class="block font-medium text-sm text-gray-700">Kategori Gejala</label>
+                            <input type="text" name="kategori" id="kategori" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 ..." value="{{ old('kategori', $gejala->kategori) }}" required>
+                            <p class="text-xs text-gray-500 mt-1">Contoh: Tulang Belakang, Sendi, Lutut, Gejala Umum.</p>
+                            @error('kategori')
                                 <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
                             @enderror
                         </div>
@@ -2932,50 +3148,35 @@ $classes = ($active ?? false)
 ===== resources\views\diagnosa\index.blade.php =====
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Mulai Diagnosa Penyakit Tulang') }}
-        </h2>
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Mulai Diagnosa (Langkah 1 dari 2)') }}</h2>
     </x-slot>
-
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <form action="{{ route('diagnosa.process') }}" method="POST" class="p-6">
-                    @csrf
-                    <div class="mb-6 text-gray-700">
-                        <p>Silakan pilih gejala-gejala yang Anda rasakan di bawah ini. Anda dapat memilih lebih dari satu gejala.</p>
-                    </div>
-
-                    @if (session('error'))
-                        <div class="mb-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
-                            {{ session('error') }}
-                        </div>
-                    @endif
+                <div class="p-6 md:p-8 text-gray-900">
+                    <h3 class="text-2xl font-bold text-gray-800">Pilih Kategori Keluhan Utama</h3>
+                    <p class="mt-2 text-gray-600">Untuk mempermudah, silakan pilih kategori yang paling sesuai dengan keluhan yang Anda rasakan saat ini.</p>
                     
-                    @error('gejala_ids')
-                         <div class="mb-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
-                            Anda harus memilih minimal satu gejala.
+                    <form action="{{ route('diagnosa.pilih-gejala') }}" method="POST" class="mt-6">
+                        @csrf
+                        <div class="space-y-4">
+                            @forelse($kategoris as $kategori)
+                                <label class="flex items-center p-4 border rounded-lg has-[:checked]:bg-indigo-50 has-[:checked]:border-indigo-400 cursor-pointer">
+                                    <input type="radio" name="kategori" value="{{ $kategori }}" class="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500">
+                                    <span class="ml-3 text-lg font-medium">{{ $kategori }}</span>
+                                </label>
+                            @empty
+                                <p class="text-center text-gray-500">Belum ada kategori gejala yang tersedia.</p>
+                            @endforelse
                         </div>
-                    @enderror
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-                        @forelse ($gejalas as $gejala)
-                            <label class="flex items-center space-x-3 p-3 border rounded-md hover:bg-gray-50 cursor-pointer">
-                                <input type="checkbox" name="gejala_ids[]" value="{{ $gejala->id }}"
-                                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
-                                <span>{{ $gejala->nama_gejala }}</span>
-                            </label>
-                        @empty
-                             <p class="text-gray-500 col-span-full">Data gejala belum disiapkan oleh admin.</p>
-                        @endforelse
-                    </div>
-
-                    <div class="flex items-center">
-                        <x-primary-button type="submit">
-                            {{ __('Lihat Hasil Diagnosa') }}
-                        </x-primary-button>
-                    </div>
-                </form>
+                        <div class="flex items-center justify-end mt-6">
+                            <x-primary-button>
+                                {{ __('Lanjutkan') }}
+                            </x-primary-button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -3026,6 +3227,229 @@ $classes = ($active ?? false)
                     <div class="mt-4">
                         {{ $riwayat->links() }}
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</x-app-layout>
+
+===== resources\views\diagnosa\select.blade.php =====
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Mulai Diagnosa (Langkah 2 dari 2)') }}</h2>
+    </x-slot>
+    <div class="py-12">
+        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 md:p-8 text-gray-900">
+                    <h3 class="text-2xl font-bold text-gray-800">Pilih Gejala yang Anda Rasakan</h3>
+                    <p class="mt-2 text-gray-600">Pilih satu atau lebih gejala yang paling sesuai dari kategori <strong>{{ $kategori }}</strong>.</p>
+                    
+                    @if(session('error'))
+                        <div class="mt-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
+                            {{ session('error') }}
+                        </div>
+                    @endif
+
+                    <form action="{{ route('diagnosa.process') }}" method="POST" class="mt-6">
+                        @csrf
+                        <div class="space-y-4">
+                            @foreach ($gejalas as $gejala)
+                                <label class="flex items-center p-4 border rounded-lg has-[:checked]:bg-indigo-50 has-[:checked]:border-indigo-400 cursor-pointer">
+                                    <input type="checkbox" name="gejala_ids[]" value="{{ $gejala->id }}" class="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500 rounded">
+                                    <span class="ml-3 font-medium">{{ $gejala->nama_gejala }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+
+                        <div class="flex items-center justify-between mt-6">
+                             <a href="{{ route('diagnosa.index') }}" class="text-sm font-semibold text-gray-600 hover:text-gray-900">â† Kembali ke Kategori</a>
+                            <x-primary-button>
+                                {{ __('Lihat Hasil Diagnosa') }}
+                            </x-primary-button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</x-app-layout>
+
+===== resources\views\diagnosa-backward\hasil.blade.php =====
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            {{ __('Hasil Verifikasi Diagnosa') }}
+        </h2>
+    </x-slot>
+
+    <div class="py-12">
+        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 md:p-8 text-gray-900 space-y-6">
+
+                    {{-- JIKA HIPOTESIS TERBUKTI, TAMPILKAN HASIL LENGKAP --}}
+                    @if($terbukti)
+                        {{-- Gejala yang Dikonfirmasi Pengguna --}}
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-700">Berdasarkan gejala yang Anda konfirmasi:</h3>
+                            <ul class="mt-2 list-disc list-inside space-y-1 text-gray-600">
+                                @forelse($gejalaTerpilih as $gejala)
+                                    <li>{{ $gejala->nama_gejala }}</li>
+                                @empty
+                                    <li>- Tidak ada gejala yang dikonfirmasi -</li>
+                                @endforelse
+                            </ul>
+                        </div>
+
+                        {{-- Hasil Diagnosa --}}
+                        <div class="border-t pt-6">
+                            <p class="text-lg font-medium text-gray-700">Hasil verifikasi menunjukkan kemungkinan besar Anda menderita:</p>
+                            <h1 class="text-4xl font-bold text-indigo-600 mt-1">
+                                {{ $penyakit->nama_penyakit }}
+                            </h1>
+                        </div>
+
+                        {{-- Deskripsi Penyakit --}}
+                        <div>
+                            <h4 class="text-xl font-semibold text-gray-800">Deskripsi Penyakit</h4>
+                            <div class="mt-2 prose max-w-none prose-p:text-gray-600">
+                                <p>{{ $penyakit->deskripsi }}</p>
+                            </div>
+                        </div>
+
+                        {{-- Pencegahan dan Pengobatan --}}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 border-t pt-6">
+                            <div>
+                                <h4 class="text-xl font-semibold text-gray-800">Saran Pencegahan</h4>
+                                <div class="mt-2 prose max-w-none prose-p:text-gray-600">
+                                    <p>{{ $penyakit->pencegahan ?? 'Informasi belum tersedia.' }}</p>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="text-xl font-semibold text-gray-800">Saran Pengobatan</h4>
+                                <div class="mt-2 prose max-w-none prose-p:text-gray-600">
+                                    <p>{{ $penyakit->pengobatan ?? 'Informasi belum tersedia.' }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    {{-- JIKA HIPOTESIS TIDAK TERBUKTI, TAMPILKAN PESAN SEDERHANA --}}
+                    @else
+                        <div class="text-center">
+                            <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                                 <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </div>
+                            <h3 class="mt-4 text-2xl font-bold text-gray-800">Hipotesis Tidak Terbukti</h3>
+                            <p class="mt-2 text-gray-600">Berdasarkan jawaban Anda, kecil kemungkinan Anda menderita <strong>{{ $penyakit->nama_penyakit }}</strong>.</p>
+                            <p class="mt-4 text-sm text-gray-500">Anda dapat mencoba memverifikasi penyakit lain atau menggunakan metode diagnosa (forward) untuk hasil yang lebih terbuka.</p>
+                        </div>
+                    @endif
+
+                    {{-- Disclaimer & Tombol Aksi --}}
+                    <div class="border-t pt-6 text-sm text-gray-500">
+                        <p><strong>Penting:</strong> Hasil ini adalah diagnosa awal dan tidak menggantikan konsultasi medis profesional.</p>
+                    </div>
+
+                    <div class="flex justify-end gap-4">
+                        <a href="{{ route('diagnosa-backward.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50">
+                            Verifikasi Lagi
+                        </a>
+                        <a href="{{ route('dashboard') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900">
+                            Kembali ke Dashboard
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</x-app-layout>
+
+===== resources\views\diagnosa-backward\index.blade.php =====
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            {{ __('Diagnosa Mundur (Backward Chaining)') }}
+        </h2>
+    </x-slot>
+    <div class="py-12">
+        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 md:p-8 text-gray-900">
+                    <h3 class="text-2xl font-bold text-gray-800">Verifikasi Hipotesis Penyakit</h3>
+                    <p class="mt-2 text-gray-600">Pilih penyakit yang Anda curigai (hipotesis), dan sistem akan menanyakan gejala-gejala yang relevan untuk memverifikasi dugaan Anda.</p>
+                    
+                    @if(session('error'))
+                        <div class="mt-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
+                            {{ session('error') }}
+                        </div>
+                    @endif
+
+                    <form action="{{ route('diagnosa-backward.start') }}" method="POST" class="mt-6">
+                        @csrf
+                        <div>
+                            <x-input-label for="penyakit_id" :value="__('Pilih Penyakit yang Dicurigai')" />
+                            <select name="penyakit_id" id="penyakit_id" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
+                                <option value="" disabled selected>-- Pilih salah satu --</option>
+                                @foreach($penyakits as $penyakit)
+                                    <option value="{{ $penyakit->id }}">{{ $penyakit->nama_penyakit }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('penyakit_id')" class="mt-2" />
+                        </div>
+
+                        <div class="flex items-center justify-end mt-6">
+                            <x-primary-button>
+                                {{ __('Mulai Verifikasi') }}
+                            </x-primary-button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</x-app-layout>
+
+===== resources\views\diagnosa-backward\process.blade.php =====
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            {{ __('Proses Verifikasi Diagnosa') }}
+        </h2>
+    </x-slot>
+
+    <div class="py-12">
+        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 md:p-8 text-gray-900">
+
+                    <p class="text-sm text-indigo-600 font-semibold">Hipotesis: {{ $penyakit->nama_penyakit }}</p>
+                    <h3 class="mt-2 text-2xl font-bold text-gray-800">Apakah Anda mengalami gejala berikut?</h3>
+                    
+                    <div class="my-6 p-6 bg-indigo-50 rounded-lg text-center">
+                        <p class="text-3xl font-medium text-indigo-900">{{ $gejala->nama_gejala }}</p>
+                    </div>
+
+                    <form action="{{ route('diagnosa-backward.answer') }}" method="POST">
+                        @csrf
+                        <div class="flex items-center justify-center gap-x-6">
+                            <button type="submit" name="jawaban" value="tidak" class="rounded-md bg-white px-8 py-3 text-lg font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                Tidak
+                            </button>
+                            <button type="submit" name="jawaban" value="ya" class="rounded-md bg-indigo-600 px-8 py-3 text-lg font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                                Ya
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="mt-8">
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div class="bg-indigo-600 h-2.5 rounded-full" style="width: {{ $progress }}%"></div>
+                        </div>
+                        <p class="text-sm text-center mt-2 text-gray-500">{{ $progress }}% Selesai</p>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -3284,6 +3708,9 @@ $classes = ($active ?? false)
             <x-nav-link :href="route('diagnosa.riwayat')" :active="request()->routeIs('diagnosa.riwayat')">
                 {{ __('Riwayat Diagnosa') }}
             </x-nav-link>
+            <x-nav-link :href="route('diagnosa-backward.index')" :active="request()->routeIs('diagnosa-backward.*')">
+                {{ __('Verifikasi Penyakit') }}
+            </x-nav-link>
         @endif
 
     </nav>
@@ -3316,183 +3743,219 @@ $classes = ($active ?? false)
 ===== resources\views\pages\kontak.blade.php =====
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Kontak Kami - Klinik Andin</title>
+    <title>Kontak Kami - Sistem Pakar</title>
     <meta name="description" content="Lokasi praktek dan kontak dokter Klinik Andin.">
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
-        /* underline hover: indigo, minimalist */
         .link-underline {
             background: linear-gradient(to right, rgb(79 70 229), rgb(79 70 229)) left bottom/0 2px no-repeat;
             transition: background-size .25s ease;
         }
-        .link-underline:hover { background-size: 100% 2px; }
-        /* subtle card shine on hover */
-        .shine::after{
-            content:"";
-            position:absolute; inset:0;
-            background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,.25) 40%, transparent 60%);
+
+        .link-underline:hover {
+            background-size: 100% 2px;
+        }
+
+        .shine::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, transparent 30%, rgba(255, 255, 255, .25) 40%, transparent 60%);
             transform: translateX(-100%);
             transition: transform .6s ease;
-            pointer-events:none;
+            pointer-events: none;
         }
-        .shine:hover::after{ transform: translateX(100%); }
+
+        .shine:hover::after {
+            transform: translateX(100%);
+        }
     </style>
 </head>
+
 <body class="antialiased bg-gray-50 text-gray-800">
-<div class="relative min-h-screen flex flex-col">
+    <div class="relative min-h-screen flex flex-col">
 
-    <!-- Decorative gradient blobs (tetap netral, tidak ubah warna utama) -->
-    <div class="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div class="absolute -top-40 left-1/2 w-[46rem] aspect-[1/1] -translate-x-1/2 rounded-full bg-gradient-to-tr from-[#80ffc5]/30 to-[#7c3aed]/30 blur-3xl"></div>
-        <div class="absolute -bottom-48 -right-10 w-[36rem] aspect-[1/1] rounded-full bg-gradient-to-tr from-[#7c3aed]/20 to-[#80ffc5]/20 blur-3xl"></div>
-    </div>
-
-    <!-- Header glass -->
-    <header class="bg-white/70 backdrop-blur-md shadow-sm ring-1 ring-black/5 sticky top-0 z-50">
-        <nav class="flex items-center justify-between p-5 lg:px-8 max-w-7xl mx-auto" aria-label="Global">
-            <div class="flex lg:flex-1">
-                <a href="/" class="-m-1.5 p-1.5 inline-flex items-center gap-2">
-                    <span class="text-xl font-bold text-indigo-600">Klinik Andin</span>
-                </a>
+        <div class="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+            <div
+                class="absolute -top-40 left-1/2 w-[46rem] aspect-[1/1] -translate-x-1/2 rounded-full bg-gradient-to-tr from-[#80ffc5]/30 to-[#7c3aed]/30 blur-3xl">
             </div>
-            <div class="flex lg:flex-1 justify-end items-center gap-x-6">
-                <a href="{{ route('kontak') }}" class="text-sm font-semibold leading-6 text-indigo-600 link-underline">Kontak</a>
-                @if (Route::has('login'))
-                    @auth
-                        <a href="{{ url('/dashboard') }}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-indigo-600 transition-colors">
-                            Dashboard <span aria-hidden="true">â†’</span>
-                        </a>
-                    @else
-                        <a href="{{ route('login') }}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-indigo-600 transition-colors">
-                            Log in <span aria-hidden="true">â†’</span>
-                        </a>
-                    @endauth
-                @endif
+            <div
+                class="absolute -bottom-48 -right-10 w-[36rem] aspect-[1/1] rounded-full bg-gradient-to-tr from-[#7c3aed]/20 to-[#80ffc5]/20 blur-3xl">
             </div>
-        </nav>
-    </header>
+        </div>
 
-    <main class="flex-grow">
-        <!-- Hero -->
-        <section class="bg-white">
-            <div class="relative isolate px-6 pt-16 lg:px-8">
-                <div class="mx-auto max-w-2xl py-20 sm:py-28">
-                    <div class="text-center">
-                        <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl" data-reveal>
-                            Lokasi Praktek Dokter
-                        </h1>
-                        <p class="mt-6 text-lg leading-8 text-gray-600" data-reveal data-reveal-delay="100">
-                            Temukan dokter spesialis tulang terbaik kami di lokasi-lokasi berikut. Kami siap memberikan pelayanan kesehatan tulang yang komprehensif untuk Anda.
-                        </p>
-                        <div class="mt-8 flex items-center justify-center gap-3 text-xs text-gray-500" data-reveal data-reveal-delay="180">
-                            <span class="inline-flex items-center gap-2 rounded-full bg-gray-50 px-3 py-1 ring-1 ring-gray-200">
-                                <span class="size-1.5 rounded-full bg-indigo-600"></span> Terverifikasi
-                            </span>
-                            <span class="inline-flex items-center gap-2 rounded-full bg-gray-50 px-3 py-1 ring-1 ring-gray-200">
-                                <span class="size-1.5 rounded-full bg-gray-800"></span> Jadwal Fleksibel
-                            </span>
-                            <span class="inline-flex items-center gap-2 rounded-full bg-gray-50 px-3 py-1 ring-1 ring-gray-200">
-                                <span class="size-1.5 rounded-full bg-gray-400"></span> Konsultasi Nyaman
-                            </span>
+        <header class="bg-white/70 backdrop-blur-md shadow-sm ring-1 ring-black/5 sticky top-0 z-50">
+            <nav class="flex items-center justify-between p-5 lg:px-8 max-w-7xl mx-auto" aria-label="Global">
+                <div class="flex lg:flex-1">
+                    <a href="/" class="-m-1.5 p-1.5 inline-flex items-center gap-2">
+                        <span class="text-xl font-bold text-indigo-600">Sistem Pakar</span>
+                    </a>
+                </div>
+                <div class="flex lg:flex-1 justify-end items-center gap-x-6">
+                    <a href="{{ route('kontak') }}"
+                        class="text-sm font-semibold leading-6 text-indigo-600 link-underline">Kontak</a>
+                    @if (Route::has('login'))
+                        @auth
+                            <a href="{{ url('/dashboard') }}"
+                                class="text-sm font-semibold leading-6 text-gray-900 hover:text-indigo-600 transition-colors">
+                                Dashboard <span aria-hidden="true">â†’</span>
+                            </a>
+                        @else
+                            <a href="{{ route('login') }}"
+                                class="text-sm font-semibold leading-6 text-gray-900 hover:text-indigo-600 transition-colors">
+                                Log in <span aria-hidden="true">â†’</span>
+                            </a>
+                        @endauth
+                    @endif
+                </div>
+            </nav>
+        </header>
+
+        <main class="flex-grow">
+            <section class="bg-white">
+                <div class="relative isolate px-6 pt-16 lg:px-8">
+                    <div class="mx-auto max-w-2xl py-20 sm:py-28">
+                        <div class="text-center">
+                            <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl" data-reveal>
+                                Lokasi Praktek Dokter
+                            </h1>
+                            <p class="mt-6 text-lg leading-8 text-gray-600" data-reveal data-reveal-delay="100">
+                                Temukan dokter spesialis tulang terbaik kami di lokasi-lokasi berikut. Kami siap
+                                memberikan pelayanan kesehatan tulang yang komprehensif untuk Anda.
+                            </p>
+                            <div class="mt-8 flex items-center justify-center gap-3 text-xs text-gray-500" data-reveal
+                                data-reveal-delay="180">
+                                <span
+                                    class="inline-flex items-center gap-2 rounded-full bg-gray-50 px-3 py-1 ring-1 ring-gray-200">
+                                    <span class="size-1.5 rounded-full bg-indigo-600"></span> Terverifikasi
+                                </span>
+                                <span
+                                    class="inline-flex items-center gap-2 rounded-full bg-gray-50 px-3 py-1 ring-1 ring-gray-200">
+                                    <span class="size-1.5 rounded-full bg-gray-800"></span> Jadwal Fleksibel
+                                </span>
+                                <span
+                                    class="inline-flex items-center gap-2 rounded-full bg-gray-50 px-3 py-1 ring-1 ring-gray-200">
+                                    <span class="size-1.5 rounded-full bg-gray-400"></span> Konsultasi Nyaman
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Doctors grid -->
-            <div class="bg-gray-50 py-20 sm:py-24">
-                <div class="mx-auto max-w-7xl px-6 lg:px-8">
-                    <div class="mx-auto max-w-2xl lg:mx-0">
-                        <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl" data-reveal>Tim Dokter Spesialis Kami</h2>
+                <div class="bg-gray-50 py-20 sm:py-24">
+                    <div class="mx-auto max-w-7xl px-6 lg:px-8">
+                        <div class="mx-auto max-w-2xl lg:mx-0">
+                            <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl" data-reveal>Tim
+                                Dokter Spesialis Kami</h2>
+                        </div>
+
+                        <ul role="list"
+                            class="mx-auto mt-14 grid max-w-2xl grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:mx-0 lg:max-w-none lg:grid-cols-3">
+                            @foreach ($kontakDokter as $kontak)
+                                <li class="group relative" data-reveal>
+                                    <div
+                                        class="shine relative overflow-hidden rounded-2xl bg-white/70 backdrop-blur-sm shadow-sm ring-1 ring-gray-200 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl">
+                                        <div class="relative">
+                                            <img class="aspect-[3/2] w-full object-contain bg-gray-100 transition-transform duration-500 group-hover:scale-[1.03]"
+                                                src="{{ $kontak['foto'] }}"
+                                                alt="Foto dokter {{ $kontak['nama_dokter'] }}">
+                                            <div
+                                                class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent opacity-70">
+                                            </div>
+                                            <div
+                                                class="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-gray-700 ring-1 ring-gray-200">
+                                                <svg viewBox="0 0 20 20" class="size-4" fill="currentColor"
+                                                    aria-hidden="true">
+                                                    <path
+                                                        d="M3 9a7 7 0 1 0 14 0A7 7 0 0 0 3 9Zm7-4a1 1 0 0 1 1 1v2h2a1 1 0 1 1 0 2h-2v2a1 1 0 1 1-2 0v-2H7a1 1 0 1 1 0-2h2V6a1 1 0 0 1 1-1Z" />
+                                                </svg>
+                                                Sistem Pakar
+                                            </div>
+                                        </div>
+
+                                        <div class="p-6">
+                                            <h3 class="font-semibold leading-8 tracking-tight text-gray-900 text-lg">
+                                                {{ $kontak['nama_dokter'] }}
+                                            </h3>
+                                            <div class="mt-1 flex items-start gap-2 text-sm text-gray-600">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                                    fill="currentColor" class="size-5 opacity-70">
+                                                    <path fill-rule="evenodd"
+                                                        d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 0 0 .281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 1 0 3 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 0 0 2.274 1.765 11.842 11.842 0 0 0 .979.57c.01.006.014.009.018.008l.006.003Z"
+                                                        clip-rule="evenodd" />
+                                                    <path d="M10 11.25a2.25 2.25 0 1 0 0-4.5 2.25 2.25 0 0 0 0 4.5Z" />
+                                                </svg>
+                                                <span>{{ $kontak['tempat_praktek'] }}</span>
+                                            </div>
+
+                                            <a href="{{ $kontak['map_url'] }}" target="_blank"
+                                                class="mt-5 inline-flex items-center gap-x-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition">
+                                                Lihat di Peta
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                    class="size-5">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M9 6.75V15m0 0v2.25m0-2.25h3.75m-3.75 0H5.25m11.25 0v2.25m0-2.25h-3.75m3.75 0h.375c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5c0-.621.504-1.125 1.125-1.125h.375m-8.25 0v2.25m0-2.25h-3.75m3.75 0h.375a1.125 1.125 0 0 1 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5c0-.621.504-1.125 1.125-1.125h.375M3 19.5h18" />
+                                                </svg>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </li>
+                            @endforeach
+                        </ul>
                     </div>
-
-                    <ul role="list"
-                        class="mx-auto mt-14 grid max-w-2xl grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:mx-0 lg:max-w-none lg:grid-cols-3">
-                        @foreach ($kontakDokter as $kontak)
-                            <li class="group relative" data-reveal>
-                                <div class="shine relative overflow-hidden rounded-2xl bg-white/70 backdrop-blur-sm shadow-sm ring-1 ring-gray-200 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl">
-                                    <div class="relative">
-                                        <img class="aspect-[3/2] w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                                             src="{{ $kontak['foto'] }}" alt="Foto dokter {{ $kontak['nama_dokter'] }}">
-                                        <!-- soft gradient overlay -->
-                                        <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent opacity-70"></div>
-                                        <!-- floating badge -->
-                                        <div class="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-gray-700 ring-1 ring-gray-200">
-                                            <svg viewBox="0 0 20 20" class="size-4" fill="currentColor" aria-hidden="true">
-                                                <path d="M3 9a7 7 0 1 0 14 0A7 7 0 0 0 3 9Zm7-4a1 1 0 0 1 1 1v2h2a1 1 0 1 1 0 2h-2v2a1 1 0 1 1-2 0v-2H7a1 1 0 1 1 0-2h2V6a1 1 0 0 1 1-1Z"/>
-                                            </svg>
-                                            Klinik Andin
-                                        </div>
-                                    </div>
-
-                                    <div class="p-6">
-                                        <h3 class="font-semibold leading-8 tracking-tight text-gray-900 text-lg">
-                                            {{ $kontak['nama_dokter'] }}
-                                        </h3>
-                                        <div class="mt-1 flex items-start gap-2 text-sm text-gray-600">
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5 opacity-70">
-                                                <path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 0 0 .281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 1 0 3 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 0 0 2.274 1.765 11.842 11.842 0 0 0 .979.57c.01.006.014.009.018.008l.006.003Z" clip-rule="evenodd" />
-                                                <path d="M10 11.25a2.25 2.25 0 1 0 0-4.5 2.25 2.25 0 0 0 0 4.5Z" />
-                                            </svg>
-                                            <span>{{ $kontak['tempat_praktek'] }}</span>
-                                        </div>
-
-                                        <a href="{{ $kontak['map_url'] }}" target="_blank"
-                                           class="mt-5 inline-flex items-center gap-x-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition">
-                                            Lihat di Peta
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                                 stroke-width="1.5" stroke="currentColor" class="size-5">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m0 0v2.25m0-2.25h3.75m-3.75 0H5.25m11.25 0v2.25m0-2.25h-3.75m3.75 0h.375c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5c0-.621.504-1.125 1.125-1.125h.375m-8.25 0v2.25m0-2.25h-3.75m3.75 0h.375a1.125 1.125 0 0 1 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5c0-.621.504-1.125 1.125-1.125h.375M3 19.5h18" />
-                                            </svg>
-                                        </a>
-                                    </div>
-                                </div>
-                            </li>
-                        @endforeach
-                    </ul>
                 </div>
+            </section>
+        </main>
+
+        <footer class="bg-gray-900 text-white">
+            <div class="mx-auto max-w-7xl px-6 py-12">
+                <p class="text-center text-xs leading-5 text-gray-400">Â© {{ date('Y') }} Sistem Pakar. All rights
+                    reserved.</p>
             </div>
-        </section>
-    </main>
+        </footer>
+    </div>
 
-    <footer class="bg-gray-900 text-white">
-        <div class="mx-auto max-w-7xl px-6 py-12">
-            <p class="text-center text-xs leading-5 text-gray-400">Â© {{ date('Y') }} Klinik Andin. All rights reserved.</p>
-        </div>
-    </footer>
-</div>
-
-<!-- Reveal-on-scroll (tanpa library, ringan, hormati prefers-reduced-motion) -->
-<script>
-(function(){
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const els = document.querySelectorAll('[data-reveal]');
-  els.forEach((el)=>{
-    el.style.opacity = 0;
-    el.style.transform = 'translateY(16px)';
-    el.style.transition = 'opacity .5s ease, transform .5s ease';
-    const d = parseInt(el.getAttribute('data-reveal-delay')||'0',10);
-    el.style.transitionDelay = (d/1000)+'s';
-  });
-  if(reduced){ els.forEach(el=>{ el.style.opacity=1; el.style.transform='none'; }); return; }
-  const io = new IntersectionObserver((entries)=>{
-    entries.forEach(e=>{
-      if(e.isIntersecting){
-        e.target.style.opacity = 1;
-        e.target.style.transform = 'none';
-        io.unobserve(e.target);
-      }
-    })
-  }, { threshold: .12 });
-  els.forEach(el=>io.observe(el));
-})();
-</script>
+    <script>
+        (function() {
+            const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const els = document.querySelectorAll('[data-reveal]');
+            els.forEach((el) => {
+                el.style.opacity = 0;
+                el.style.transform = 'translateY(16px)';
+                el.style.transition = 'opacity .5s ease, transform .5s ease';
+                const d = parseInt(el.getAttribute('data-reveal-delay') || '0', 10);
+                el.style.transitionDelay = (d / 1000) + 's';
+            });
+            if (reduced) {
+                els.forEach(el => {
+                    el.style.opacity = 1;
+                    el.style.transform = 'none';
+                });
+                return;
+            }
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach(e => {
+                    if (e.isIntersecting) {
+                        e.target.style.opacity = 1;
+                        e.target.style.transform = 'none';
+                        io.unobserve(e.target);
+                    }
+                })
+            }, {
+                threshold: .12
+            });
+            els.forEach(el => io.observe(el));
+        })();
+    </script>
 </body>
+
 </html>
 
 ===== resources\views\profile\partials\delete-user-form.blade.php =====
@@ -3777,7 +4240,7 @@ $classes = ($active ?? false)
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Klinik Andin - Sistem Pakar Penyakit Tulang</title>
+    <title>Sistem Pakar - Sistem Pakar Penyakit Tulang</title>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
@@ -3795,22 +4258,27 @@ $classes = ($active ?? false)
                 {{-- LOGO DI KIRI --}}
                 <div class="flex lg:flex-1">
                     <a href="/" class="-m-1.5 p-1.5">
-                        <span class="text-xl font-bold text-indigo-600">Klinik Andin</span>
+                        <span class="text-xl font-bold text-indigo-600">Sistem Pakar</span>
                     </a>
                 </div>
-                
+
                 {{-- SEMUA LINK NAVIGASI DI KANAN --}}
                 <div class="hidden lg:flex lg:items-center lg:gap-x-6">
-                    <a href="{{ route('kontak') }}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-indigo-600">Kontak</a>
-        
+                    <a href="{{ route('kontak') }}"
+                        class="text-sm font-semibold leading-6 text-gray-900 hover:text-indigo-600">Kontak</a>
+
                     @if (Route::has('login'))
                         {{-- Garis Pemisah Vertikal --}}
                         <span class="h-6 w-px bg-gray-200" aria-hidden="true"></span>
-                        
+
                         @auth
-                            <a href="{{ url('/dashboard') }}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-indigo-600">Dashboard <span aria-hidden="true">&rarr;</span></a>
+                            <a href="{{ url('/dashboard') }}"
+                                class="text-sm font-semibold leading-6 text-gray-900 hover:text-indigo-600">Dashboard <span
+                                    aria-hidden="true">&rarr;</span></a>
                         @else
-                            <a href="{{ route('login') }}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-indigo-600">Log in <span aria-hidden="true">&rarr;</span></a>
+                            <a href="{{ route('login') }}"
+                                class="text-sm font-semibold leading-6 text-gray-900 hover:text-indigo-600">Log in <span
+                                    aria-hidden="true">&rarr;</span></a>
                         @endauth
                     @endif
                 </div>
@@ -3818,7 +4286,7 @@ $classes = ($active ?? false)
         </header>
 
         <main class="flex-grow">
-            <div class="relative bg-white">
+            <div class="relative bg-white h-screen">
                 <div class="mx-auto max-w-7xl">
                     <div class="relative z-10 lg:w-full lg:max-w-2xl">
                         {{-- Efek gradasi di samping --}}
@@ -3847,10 +4315,11 @@ $classes = ($active ?? false)
                 </div>
                 {{-- Kolom Gambar --}}
                 <div class="bg-gray-50 lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
-                    <img class="aspect-[3/2] object-cover lg:aspect-auto lg:h-full lg:w-full"
-                        src="https://images.unsplash.com/photo-1527613426441-4da17471b66d?q=80&w=2067&auto=format&fit=crop"
-                        alt="Dokter memeriksa hasil rontgen">
-                </div>
+                    <img src="{{ asset('images/tulang.jpg') }}"
+                         alt="Dokter memeriksa hasil rontgen"
+                         class="h-full w-full object-contain">
+                  </div>
+                  
             </div>
 
             <section id="features" class="bg-white py-24 sm:py-32">
@@ -3942,7 +4411,7 @@ $classes = ($active ?? false)
         <footer class="bg-gray-900 text-white">
             <div class="mx-auto max-w-7xl px-6 py-12 md:flex md:items-center md:justify-between lg:px-8">
                 <div class="mt-8 md:order-1 md:mt-0">
-                    <p class="text-center text-xs leading-5 text-gray-400">&copy; {{ date('Y') }} Klinik Andin. All
+                    <p class="text-center text-xs leading-5 text-gray-400">&copy; {{ date('Y') }} Sistem Pakar. All
                         rights reserved.</p>
                 </div>
             </div>

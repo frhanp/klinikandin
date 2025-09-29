@@ -33,6 +33,7 @@ class GejalaController extends Controller
         $request->validate([
             'kode_gejala' => 'required|string|unique:gejalas,kode_gejala|max:10',
             'nama_gejala' => 'required|string|max:255',
+            'kategori' => 'required|string|max:255',
         ]);
 
         Gejala::create($request->all());
@@ -57,6 +58,7 @@ class GejalaController extends Controller
         $request->validate([
             'kode_gejala' => 'required|string|max:10|unique:gejalas,kode_gejala,' . $gejala->id,
             'nama_gejala' => 'required|string|max:255',
+            'kategori' => 'required|string|max:255',
         ]);
 
         $gejala->update($request->all());

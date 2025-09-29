@@ -15,7 +15,7 @@
                             <h3 class="text-2xl font-bold text-gray-800">Selamat Datang, {{ Auth::user()->name }}!</h3>
                             <p class="mt-2 text-gray-600">Siap untuk memeriksa kesehatan tulang Anda? Klik tombol di samping untuk memulai diagnosa berdasarkan gejala yang Anda rasakan.</p>
                         </div>
-                        <a href="{{ route('diagnosa.index') }}" class="w-full md:w-auto flex-shrink-0 rounded-md bg-indigo-600 px-6 py-3 text-sm font-semibold text-white text-center shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-all duration-150">
+                        <a href="{{ route('diagnosa.start') }}" class="w-full md:w-auto flex-shrink-0 rounded-md bg-indigo-600 px-6 py-3 text-sm font-semibold text-white text-center shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-all duration-150">
                             Mulai Diagnosa Baru
                         </a>
                     </div>
@@ -35,7 +35,7 @@
                                         <p class="font-semibold text-gray-800">{{ $riwayat->penyakit->nama_penyakit }}</p>
                                         <p class="text-sm text-gray-500">{{ $riwayat->created_at->format('d F Y, H:i') }}</p>
                                     </div>
-                                    <a href="{{ route('diagnosa.hasil', $riwayat->id) }}" class="text-sm font-semibold text-indigo-600 hover:text-indigo-500">
+                                    <a href="{{ route('diagnosa.result', $riwayat->id) }}" class="text-sm font-semibold text-indigo-600 hover:text-indigo-500">
                                         Lihat Detail
                                     </a>
                                 </div>

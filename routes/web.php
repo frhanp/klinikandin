@@ -76,9 +76,20 @@ Route::middleware(['auth', 'verified', 'role:dokter'])->prefix('dokter')->name('
 
 // RUTE KHUSUS UNTUK PENGGUNA
 Route::middleware(['auth', 'verified', 'role:pengguna'])->prefix('diagnosa')->name('diagnosa.')->group(function () {
-    Route::get('/', [DiagnosaController::class, 'index'])->name('index');
-    Route::post('/', [DiagnosaController::class, 'process'])->name('process');
-    Route::get('/hasil/{diagnosaHistory}', [DiagnosaController::class, 'hasil'])->name('hasil');
+    // Route::get('/', [DiagnosaController::class, 'start'])->name('start');
+    // Route::post('/', [DiagnosaController::class, 'process'])->name('process');
+    // Route::get('/hasil/{diagnosaHistory}', [DiagnosaController::class, 'hasil'])->name('hasil');
+    // Route::get('/riwayat', [DiagnosaController::class, 'riwayat'])->name('riwayat');
+
+    // Route::get('/proses', [DiagnosaController::class, 'process'])->name('process');
+    // Route::post('/jawab', [DiagnosaController::class, 'answer'])->name('answer');
+    // Route::get('/hasil', [DiagnosaController::class, 'result'])->name('result'); // Ganti nama rute hasil
+    // Route::get('/riwayat', [DiagnosaController::class, 'riwayat'])->name('riwayat');
+
+    Route::get('/', [DiagnosaController::class, 'start'])->name('start');
+    Route::get('/proses', [DiagnosaController::class, 'process'])->name('process');
+    Route::post('/jawab', [DiagnosaController::class, 'answer'])->name('answer');
+    Route::get('/hasil', [DiagnosaController::class, 'result'])->name('result');
     Route::get('/riwayat', [DiagnosaController::class, 'riwayat'])->name('riwayat');
 });
 
@@ -91,6 +102,6 @@ Route::middleware(['auth', 'verified', 'role:pengguna'])
         Route::get('/proses', [BackwardDiagnosaController::class, 'process'])->name('process');
         Route::post('/jawab', [BackwardDiagnosaController::class, 'answer'])->name('answer');
         Route::get('/hasil', [BackwardDiagnosaController::class, 'result'])->name('result');
-});
+    });
 
 require __DIR__ . '/auth.php';

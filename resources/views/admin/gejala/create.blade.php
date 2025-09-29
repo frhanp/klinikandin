@@ -26,6 +26,14 @@
                                 <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
                             @enderror
                         </div>
+                        <div class="mb-4">
+                            <label for="kategori" class="block font-medium text-sm text-gray-700">Kategori Gejala</label>
+                            <input type="text" name="kategori" id="kategori" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 ..." value="{{ old('kategori') }}" required>
+                            <p class="text-xs text-gray-500 mt-1">Contoh: Tulang Belakang, Sendi, Lutut, Gejala Umum.</p>
+                            @error('kategori')
+                                <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
+                            @enderror
+                        </div>
                         <div class="flex items-center justify-end mt-4">
                             <a href="{{ route($rolePrefix . '.gejala.index') }}" class="text-sm text-gray-600 hover:text-gray-900 mr-4">Batal</a>
                             <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Simpan</button>

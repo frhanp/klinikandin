@@ -7,75 +7,131 @@ use App\Models\Gejala;
 use App\Models\Penyakit;
 use App\Models\DiagnosaHistory;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class DiagnosaController extends Controller
 {
-    public function index()
+    /**
+     * Memulai atau mereset sesi diagnosa dialog.
+     */
+    public function start()
     {
-        $gejalas = Gejala::all();
-        return view('diagnosa.index', compact('gejalas'));
-    }
-
-    public function process(Request $request)
-    {
-        $request->validate([
-            'gejala_ids' => 'required|array|min:1',
-        ], [
-            'gejala_ids.required' => 'Silakan pilih minimal satu gejala untuk memulai diagnosa.',
+        // Inisialisasi sesi diagnosa
+        session([
+            'diagnosa_forward' => [
+                'possible_penyakit_ids' => Penyakit::pluck('id')->toArray(),
+                'asked_gejala_ids' => [],
+                'confirmed_gejala_ids' => [],
+            ]
         ]);
 
-        $gejala_ids = $request->input('gejala_ids', []);
-
-        if (count($gejala_ids) > 10) {
-            return redirect()->back()->with('error', 'Anda memilih terlalu banyak gejala. Mohon pilih hanya gejala yang paling relevan (maksimal 10).');
-        }
-        $penyakits = Penyakit::with('gejalas')->get();
-        $matches = [];
-
-        foreach ($penyakits as $penyakit) {
-            $gejalaCocokCount = $penyakit->gejalas->whereIn('id', $gejala_ids)->count();
-            $totalGejala = $penyakit->gejalas->count();
-
-            if ($totalGejala > 0) {
-                $skor = $gejalaCocokCount / ($totalGejala + count($gejala_ids) - $gejalaCocokCount);
-                if ($skor > 0) {
-                    $matches[] = [
-                        'penyakit' => $penyakit,
-                        'skor' => $skor,
-                    ];
-                }
-            }
-        }
-
-        if (!empty($matches)) {
-            usort($matches, fn($a, $b) => $b['skor'] <=> $a['skor']);
-            $bestMatch = $matches[0];
-
-            $diagnosaHistory = DiagnosaHistory::create([
-                'user_id' => Auth::id(),
-                'penyakit_id' => $bestMatch['penyakit']->id,
-                'gejala_terpilih' => json_encode($gejala_ids),
-                'hasil_skor' => $bestMatch['skor'] * 100, // <--- KODE SUDAH DIPERBAIKI
-            ]);
-
-            return redirect()->route('diagnosa.hasil', $diagnosaHistory->id);
-        } else {
-            return redirect()->route('diagnosa.index')->with('error', 'Tidak ditemukan penyakit yang sesuai dengan gejala yang Anda pilih.');
-        }
+        return redirect()->route('diagnosa.process');
     }
 
-    public function hasil(DiagnosaHistory $diagnosaHistory)
+    /**
+     * Memproses dan menampilkan pertanyaan dialog satu per satu.
+     */
+    public function process()
     {
-        if ($diagnosaHistory->user_id !== Auth::id()) {
-            abort(403);
+        $diagnosaData = session('diagnosa_forward');
+
+        if (!$diagnosaData) {
+            return redirect()->route('diagnosa.start');
         }
 
-        $diagnosaHistory->load('penyakit');
+        $possiblePenyakitIds = $diagnosaData['possible_penyakit_ids'];
+        $askedGejalaIds = $diagnosaData['asked_gejala_ids'];
 
-        $gejalaTerpilihIds = json_decode($diagnosaHistory->gejala_terpilih, true);
-        $gejalaTerpilih = Gejala::whereIn('id', $gejalaTerpilihIds)->get();
+        // Kondisi berhenti: jika hanya tersisa 1 atau 0 kemungkinan penyakit
+        if (count($possiblePenyakitIds) <= 1) {
+            return redirect()->route('diagnosa.result');
+        }
+        
+        // Cari pertanyaan terbaik berikutnya
+        $nextGejala = Gejala::query()
+            ->select('gejalas.id', 'gejalas.nama_gejala as pertanyaan', DB::raw('count(rules.penyakit_id) as frequency'))
+            ->join('rules', 'gejalas.id', '=', 'rules.gejala_id')
+            ->whereIn('rules.penyakit_id', $possiblePenyakitIds)
+            ->whereNotIn('gejalas.id', $askedGejalaIds)
+            ->groupBy('gejalas.id', 'gejalas.nama_gejala')
+            ->orderByDesc('frequency')
+            ->first();
+        
+        // Kondisi berhenti: jika tidak ada lagi pertanyaan yang bisa diajukan
+        if (!$nextGejala) {
+            return redirect()->route('diagnosa.result');
+        }
 
-        return view('diagnosa.hasil', compact('diagnosaHistory', 'gejalaTerpilih'));
+        return view('diagnosa.process', compact('nextGejala'));
+    }
+
+    /**
+     * Menerima jawaban dari pengguna dan memperbarui sesi.
+     */
+    public function answer(Request $request)
+    {
+        $request->validate([
+            'gejala_id' => 'required|exists:gejalas,id',
+            'jawaban' => 'required|in:ya,tidak',
+        ]);
+
+        $diagnosaData = session('diagnosa_forward');
+        $gejalaId = $request->gejala_id;
+
+        // Tambahkan gejala ke daftar yang sudah ditanyakan
+        $diagnosaData['asked_gejala_ids'][] = $gejalaId;
+
+        if ($request->jawaban == 'ya') {
+            // Tambahkan ke gejala yang dikonfirmasi
+            $diagnosaData['confirmed_gejala_ids'][] = $gejalaId;
+            
+            // Perbarui daftar kemungkinan penyakit
+            $penyakitIdsWithGejala = DB::table('rules')
+                ->where('gejala_id', $gejalaId)
+                ->pluck('penyakit_id')->toArray();
+            
+            // Ambil irisan antara kemungkinan saat ini dan yang baru
+            $diagnosaData['possible_penyakit_ids'] = array_intersect(
+                $diagnosaData['possible_penyakit_ids'],
+                $penyakitIdsWithGejala
+            );
+        }
+
+        session(['diagnosa_forward' => $diagnosaData]);
+
+        return redirect()->route('diagnosa.process');
+    }
+
+    /**
+     * Menampilkan hasil akhir diagnosa.
+     */
+    public function result()
+    {
+        $diagnosaData = session('diagnosa_forward');
+        if (!$diagnosaData) {
+            return redirect()->route('diagnosa.start');
+        }
+        
+        $confirmedGejalaIds = $diagnosaData['confirmed_gejala_ids'];
+        $possiblePenyakitIds = $diagnosaData['possible_penyakit_ids'];
+        
+        $penyakitTerbaik = Penyakit::whereIn('id', $possiblePenyakitIds)->get();
+        $gejalaTerpilih = Gejala::whereIn('id', $confirmedGejalaIds)->get();
+
+        // Simpan ke riwayat jika ada hasil
+        if ($penyakitTerbaik->isNotEmpty()) {
+            DiagnosaHistory::create([
+                'user_id' => Auth::id(),
+                'penyakit_id' => $penyakitTerbaik->first()->id,
+                'gejala_terpilih' => json_encode($confirmedGejalaIds),
+                'hasil_skor' => 100, // Skor tidak relevan di alur ini, tapi diisi 100
+                'penyakit_terbaik_lainnya' => json_encode($penyakitTerbaik->pluck('id')->toArray())
+            ]);
+        }
+        
+        session()->forget('diagnosa_forward');
+        
+        return view('diagnosa.hasil', compact('penyakitTerbaik', 'gejalaTerpilih'));
     }
 
     public function riwayat()
